@@ -28,7 +28,9 @@ Pour déployer, importer ce dépôt dans Vercel ou un hébergeur Next.js, choisi
 - Tableau de bord calculé à partir des données accessibles.
 - Isolation RLS entre organisations et validation serveur.
 
-Restent à développer : invitations, administration des membres, copropriétaires, bâtiments/étages, modifications avec historique, finances, incidents, documents, abonnements et essai, arabe/RTL, intégrations. Aucun paiement ni abonnement fictif n’est activé.
+Nouveau jalon : `/admin` pour le suivi manuel des abonnements avec historique, `/app/communaute` pour les invitations de résidents et la publication d’annonces, `/resident` pour accepter une invitation et consulter les activités de sa résidence. Voir [le guide d’installation et d’accès](docs/admin-residents.md). La seconde migration ajoute exclusivement de nouveaux objets ; aucun compte administrateur n’est préconfiguré.
+
+Restent à développer : administration générale des membres, bâtiments/étages, modifications avec historique, finances, incidents, documents, paiements et restrictions automatiques d’abonnement, arabe/RTL, intégrations. Aucun paiement fictif n’est activé.
 
 ## Vérification
 

@@ -15,11 +15,18 @@ export default async function AppLayout({
     data: { user },
   } = await db.auth.getUser();
   if (!user) redirect("/connexion");
+  const { data: isAdmin } = await db.rpc("syndic_is_platform_admin");
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <Brand />
         <nav>
+          {isAdmin === true && (
+            <Link href="/admin">
+              <ShieldCheck size={19} />
+              Administration
+            </Link>
+          )}
           <Link href="/app">
             <LayoutDashboard size={19} />
             Vue d’ensemble
@@ -32,6 +39,8 @@ export default async function AppLayout({
             <Grid2X2 size={19} />
             Lots
           </Link>
+          <Link href="/app/communaute">Résidents et activités</Link>
+          <Link href="/resident">Mon espace résident</Link>
         </nav>
         <div className="bottom">
           <ShieldCheck size={22} />

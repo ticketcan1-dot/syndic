@@ -130,8 +130,9 @@ export default function Home() {
               <summary>Quelles fonctionnalités sont disponibles ?</summary>
               <p>
                 Inscription, connexion, création d’organisations, de résidences
-                et de lots. Les finances, invitations, incidents et abonnements
-                seront développés aux prochains jalons.
+                et de lots. Invitations de résidents, annonces de résidence et
+                suivi administratif des abonnements après activation des modules.
+                Les finances et incidents seront développés aux prochains jalons.
               </p>
             </details>
             <details>

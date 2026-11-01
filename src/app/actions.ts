@@ -23,6 +23,18 @@ export async function signIn(form: FormData) {
       "/connexion",
       "Connexion impossible. Vérifiez vos identifiants et la confirmation de votre adresse.",
     );
+  const { data: isAdmin } = await db.rpc("syndic_is_platform_admin");
+  if (isAdmin === true) redirect("/admin");
+  const { data: resident } = await db.rpc("syndic_my_resident_space");
+  const { data: invitations } = await db
+    .from("syndic_resident_invitations")
+    .select("id")
+    .eq("email", email.trim().toLowerCase())
+    .is("revoked_at", null)
+    .is("accepted_at", null)
+    .gt("expires_at", new Date().toISOString())
+    .limit(1);
+  if (resident?.units?.length || invitations?.length) redirect("/resident");
   redirect("/app");
 }
 export async function signUp(form: FormData) {
