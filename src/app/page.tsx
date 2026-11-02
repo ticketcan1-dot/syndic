@@ -131,8 +131,9 @@ export default function Home() {
               <p>
                 Inscription, connexion, création d’organisations, de résidences
                 et de lots. Invitations de résidents, annonces de résidence et
-                suivi administratif des abonnements après activation des modules.
-                Les finances et incidents seront développés aux prochains jalons.
+                suivi administratif des abonnements après activation des
+                modules. Les finances et incidents seront développés aux
+                prochains jalons.
               </p>
             </details>
             <details>

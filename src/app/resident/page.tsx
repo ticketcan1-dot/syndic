@@ -50,6 +50,9 @@ export default async function Page({
       <main className="section">
         <span className="eyebrow">Mon espace résident</span>
         <h1>La vie de votre résidence</h1>
+        <Link href="/operations" className="button primary">
+          Mes cotisations, messages et réunions
+        </Link>
         <p>{user.email}</p>
         <Notice
           message={(await searchParams).message}

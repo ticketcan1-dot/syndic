@@ -21,6 +21,7 @@ export default async function AppLayout({
       <aside className="sidebar">
         <Brand />
         <nav>
+          <Link href="/operations">Cotisations, messages et réunions</Link>
           {isAdmin === true && (
             <Link href="/admin">
               <ShieldCheck size={19} />
