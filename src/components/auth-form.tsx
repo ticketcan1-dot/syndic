@@ -54,12 +54,12 @@ export function AuthForm({
           <Submit>{signup ? "Créer mon compte" : "Se connecter"}</Submit>
         </form>
         <p className="small" style={{ marginTop: 24 }}>
-          {signup ? "Vous avez déjà un compte ?" : "Première visite ?"}{" "}
+          Votre compte est fourni par votre administrateur ou votre syndic.
           <Link
             className="text-link"
             href={signup ? "/connexion" : "/inscription"}
           >
-            {signup ? "Se connecter" : "Créer un compte"}
+            {signup ? "Se connecter" : "Accès sur autorisation"}
           </Link>
         </p>
         {!signup && (

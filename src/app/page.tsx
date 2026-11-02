@@ -20,8 +20,8 @@ export default function Home() {
             <Link href="/connexion" className="button outline">
               Se connecter
             </Link>
-            <Link href="/inscription" className="button primary">
-              Créer mon espace
+            <Link href="/connexion" className="button primary">
+              Accéder à mon espace
             </Link>
           </nav>
         </header>
@@ -41,8 +41,8 @@ export default function Home() {
                 lots et garder une vision claire de votre patrimoine.
               </p>
               <div className="actions">
-                <Link href="/inscription" className="button primary">
-                  Créer mon espace <ArrowRight size={18} />
+                <Link href="/connexion" className="button primary">
+                  Accéder à mon espace <ArrowRight size={18} />
                 </Link>
                 <a href="#fonctionnalites" className="button outline">
                   Découvrir la plateforme

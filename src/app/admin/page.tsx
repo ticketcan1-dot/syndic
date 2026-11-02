@@ -2,6 +2,7 @@ import { platformAdmin } from "@/lib/access";
 import { Submit } from "@/components/submit";
 import { Notice } from "@/components/notice";
 import { setSubscription } from "./actions";
+import { provisionSyndic } from "./provision";
 const statuses: Record<string, string> = {
   trialing: "Essai",
   active: "Actif",
@@ -69,6 +70,32 @@ export default async function Page({
         </div>
       </div>
       <section className="card">
+        <h2>Créer un compte syndic</h2>
+        <p>Le compte est activé immédiatement sans e-mail de confirmation.</p>
+        <form action={provisionSyndic} className="form">
+          <label>
+            Organisation
+            <input name="organization" required minLength={2} maxLength={120} />
+          </label>
+          <label>
+            E-mail de connexion
+            <input name="email" type="email" required />
+          </label>
+          <label>
+            Mot de passe initial
+            <input
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={12}
+              maxLength={128}
+            />
+          </label>
+          <Submit>Créer le compte syndic</Submit>
+        </form>
+      </section>
+      <section className="card" style={{ marginTop: 24 }}>
         <h2>Abonnements des syndics</h2>
         <p>
           Suivi manuel. Chaque modification exige un motif et conserve un

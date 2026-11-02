@@ -38,28 +38,7 @@ export async function signIn(form: FormData) {
   redirect("/app");
 }
 export async function signUp(form: FormData) {
-  const parsed = credentials.safeParse(Object.fromEntries(form));
-  if (!parsed.success)
-    message(
-      "/inscription",
-      "Adresse valide et mot de passe de 12 caractères minimum requis.",
-    );
-  const db = await supabase();
-  const { error } = await db.auth.signUp({
-    ...parsed.data,
-    options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-    },
-  });
-  if (error)
-    message(
-      "/inscription",
-      "Inscription indisponible. Réessayez plus tard ou contactez le gestionnaire.",
-    );
-  message(
-    "/connexion",
-    "Consultez votre e-mail pour confirmer votre inscription.",
-  );
+  redirect("/connexion?message=Inscription%20publique%20fermée.");
 }
 export async function signOut() {
   const db = await supabase();

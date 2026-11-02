@@ -3,6 +3,7 @@ import { workspace } from "@/lib/data";
 import { Notice } from "@/components/notice";
 import { Submit } from "@/components/submit";
 import { inviteResident, revokeInvitation, publishPost } from "./actions";
+import { provisionResident } from "@/app/admin/provision";
 export default async function Page({
   searchParams,
 }: {
@@ -38,7 +39,40 @@ export default async function Page({
       />
       <div className="split">
         <section className="card">
-          <h2>Inviter un résident</h2>
+          <h2>Créer un accès habitant</h2>
+          {data.units.length > 0 && (
+            <form action={provisionResident} className="form">
+              <label>
+                Lot
+                <select name="unit">
+                  {data.units.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                E-mail
+                <input name="email" type="email" required />
+              </label>
+              <label>
+                Mot de passe initial
+                <input
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={12}
+                  maxLength={128}
+                  required
+                />
+              </label>
+              <Submit>Créer l’accès sans e-mail</Submit>
+            </form>
+          )}
+          <h3 style={{ marginTop: 24 }}>
+            Associer un compte existant par invitation
+          </h3>
           {data.units.length ? (
             <form action={inviteResident} className="form">
               <label>
