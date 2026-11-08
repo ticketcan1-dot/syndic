@@ -4,6 +4,7 @@ import { Notice } from "@/components/notice";
 import { Submit } from "@/components/submit";
 import { inviteResident, revokeInvitation, publishPost } from "./actions";
 import { provisionResident } from "@/app/admin/provision";
+import { ShareLink } from "@/components/share-link";
 export default async function Page({
   searchParams,
 }: {
@@ -146,6 +147,11 @@ export default async function Page({
           <div className="list-row" key={i.id}>
             <div>
               <strong>{i.email}</strong>
+              {!i.revoked_at && !i.accepted_at && (
+                <ShareLink
+                  url={`${process.env.NEXT_PUBLIC_SITE_URL}/invitation/${i.id}`}
+                />
+              )}
               <p>
                 {data.units.find((u) => u.id === i.unit_id)?.label ?? "Lot"} ·{" "}
                 {i.revoked_at

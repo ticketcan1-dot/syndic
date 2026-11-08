@@ -34,8 +34,8 @@ export async function signIn(form: FormData) {
     .is("accepted_at", null)
     .gt("expires_at", new Date().toISOString())
     .limit(1);
-  if (resident?.units?.length || invitations?.length) redirect("/resident");
-  redirect("/app");
+  if (invitations?.length) redirect("/resident");
+  redirect("/operations");
 }
 export async function signUp(form: FormData) {
   redirect("/connexion?message=Inscription%20publique%20fermée.");

@@ -22,10 +22,19 @@ export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ message?: string; unit?: string }>;
+  searchParams: Promise<{ message?: string; unit?: string; view?: string }>;
 }) {
   const { db } = await signedIn();
   const query = await searchParams;
+  const view = [
+    "balances",
+    "expenses",
+    "messages",
+    "meetings",
+    "notifications",
+  ].includes(query.view ?? "")
+    ? query.view!
+    : "balances";
   await db.rpc("syndic_refresh_my_reminders");
   const [context, charges, payments, expenses, meetings, inbox] =
     await Promise.all([
@@ -65,36 +74,31 @@ export default async function Page({
   );
   return (
     <div className="container">
-      <header className="public-nav">
-        <Brand />
-        <Link href="/app" className="button outline">
-          Mon espace
-        </Link>
-      </header>
       <main className="section">
-        <span className="eyebrow">Votre quotidien</span>
-        <h1>Gestion et échanges</h1>
-        <a href="/operations/export" className="button outline">
-          Exporter les cotisations
-        </a>
-        <p>Les informations accessibles pour vos lots et vos résidences.</p>
-        <nav className="actions" style={{ marginBottom: 24 }}>
-          <a href="#comptes" className="button outline">
-            Cotisations
-          </a>
-          <Link href="/incidents" className="button outline">
-            Incidents
-          </Link>
-          <a href="#messages" className="button outline">
-            Messages
-          </a>
-          <a href="#reunions" className="button outline">
-            Réunions
-          </a>
-          <a href="#notifications" className="button outline">
-            Notifications
-          </a>
-        </nav>
+        <div className="page-heading">
+          <div>
+            <span className="eyebrow">Ma résidence</span>
+            <h1>
+              {
+                {
+                  balances: "Les comptes, simplement.",
+                  expenses: "Dépenses partagées",
+                  messages: "Conversations",
+                  meetings: "La vie de la résidence",
+                  notifications: "Notifications",
+                }[view]
+              }
+            </h1>
+          </div>
+          {managed.length > 0 && (
+            <Link
+              href="/operations?view=expenses#nouvelle-depense"
+              className="button primary"
+            >
+              + Ajouter
+            </Link>
+          )}
+        </div>
         <Notice
           message={query.message}
           error={[
@@ -107,92 +111,97 @@ export default async function Page({
             messages,
           ].some((r) => r.error)}
         />
-        <div className="stats">
-          {[
-            ["Appelé", total],
-            ["Réglé", received],
-            ["À régler", total - received],
-          ].map(([label, value]) => (
-            <section className="card" key={label}>
-              <p>{label}</p>
-              <div className="stat-number">{mad(Number(value))}</div>
-            </section>
-          ))}
-        </div>
-        <section className="card" id="comptes">
-          <h2>Cotisations et règlements</h2>
-          {!charges.data?.length && <p>Aucune cotisation pour le moment.</p>}
-          {charges.data?.map((c) => {
-            const u = data.units.find((u) => u.id === c.unit_id);
-            const e = expenses.data?.find((e) => e.id === c.expense_id);
-            const balance = Number(c.amount_cents) - paid(c.id);
-            return (
-              <details key={c.id}>
-                <summary>
-                  {u?.label} · {e?.title} — {mad(balance)} à régler
-                </summary>
-                <p>
-                  Montant : {mad(Number(c.amount_cents))} · Échéance :{" "}
-                  {e?.due_date}
-                </p>
-                {payments.data
-                  ?.filter((p) => p.charge_id === c.id)
-                  .map((p) => (
-                    <p key={p.id} className="small">
-                      {p.paid_on} · {mad(Number(p.amount_cents))} · Référence{" "}
-                      {p.reference}
-                    </p>
-                  ))}
-                {u?.can_manage && balance > 0 && (
-                  <>
-                    <form action={operate} className="form">
-                      <input type="hidden" name="task" value="payment" />
-                      <input type="hidden" name="target" value={c.id} />
-                      <label>
-                        Montant reçu en MAD
-                        <input
-                          name="amount"
-                          type="number"
-                          min="0.01"
-                          max={balance / 100}
-                          step="0.01"
-                          required
-                        />
-                      </label>
-                      <label>
-                        Date de réception
-                        <input type="date" name="date" required />
-                      </label>
-                      <label>
-                        Référence du règlement vérifié
-                        <input
-                          name="reference"
-                          minLength={3}
-                          maxLength={160}
-                          required
-                        />
-                      </label>
-                      <Submit>Enregistrer le règlement</Submit>
-                    </form>
-                    <form action={operate} style={{ marginTop: 12 }}>
-                      <input type="hidden" name="task" value="remind" />
-                      <input type="hidden" name="target" value={c.id} />
-                      <Submit>Envoyer un rappel dans le site</Submit>
-                    </form>
-                  </>
-                )}
-              </details>
-            );
-          })}
-        </section>
-        {managed.length > 0 && (
-          <section className="card" style={{ marginTop: 24 }}>
-            <h2>Nouvelle dépense / appel de cotisation</h2>
-            <p>
-              Répartition égale entre les lots cochés. Les centimes restants
-              sont répartis sans perte. Tous les lots choisis doivent appartenir
-              à la résidence sélectionnée.
-            </p>
+        {(view === "balances" || view === "expenses") && (
+          <>
+            <div className="stats">
+              {[
+                ["Appelé", total],
+                ["Réglé", received],
+                ["À régler", total - received],
+              ].map(([label, value]) => (
+                <section className="card" key={label}>
+                  <p>{label}</p>
+                  <div className="stat-number">{mad(Number(value))}</div>
+                </section>
+              ))}
+            </div>
+          </>
+        )}
+        {(view === "balances" || view === "expenses") && (
+          <section className="card" id="comptes">
+            <h2>Qui doit quoi ?</h2>
+            {!charges.data?.length && <p>Aucune cotisation pour le moment.</p>}
+            {charges.data?.map((c) => {
+              const u = data.units.find((u) => u.id === c.unit_id);
+              const e = expenses.data?.find((e) => e.id === c.expense_id);
+              const balance = Number(c.amount_cents) - paid(c.id);
+              return (
+                <details key={c.id}>
+                  <summary>
+                    {u?.label} · {e?.title} — {mad(balance)} à régler
+                  </summary>
+                  <p>
+                    Montant : {mad(Number(c.amount_cents))} · Échéance :{" "}
+                    {e?.due_date}
+                  </p>
+                  {payments.data
+                    ?.filter((p) => p.charge_id === c.id)
+                    .map((p) => (
+                      <p key={p.id} className="small">
+                        {p.paid_on} · {mad(Number(p.amount_cents))} · Référence{" "}
+                        {p.reference}
+                      </p>
+                    ))}
+                  {u?.can_manage && balance > 0 && (
+                    <>
+                      <form action={operate} className="form">
+                        <input type="hidden" name="task" value="payment" />
+                        <input type="hidden" name="target" value={c.id} />
+                        <label>
+                          Montant reçu en MAD
+                          <input
+                            name="amount"
+                            type="number"
+                            min="0.01"
+                            max={balance / 100}
+                            step="0.01"
+                            required
+                          />
+                        </label>
+                        <label>
+                          Date de réception
+                          <input type="date" name="date" required />
+                        </label>
+                        <label>
+                          Référence du règlement vérifié
+                          <input
+                            name="reference"
+                            minLength={3}
+                            maxLength={160}
+                            required
+                          />
+                        </label>
+                        <Submit>Enregistrer le règlement</Submit>
+                      </form>
+                      <form action={operate} style={{ marginTop: 12 }}>
+                        <input type="hidden" name="task" value="remind" />
+                        <input type="hidden" name="target" value={c.id} />
+                        <Submit>Rappeler</Submit>
+                      </form>
+                    </>
+                  )}
+                </details>
+              );
+            })}
+          </section>
+        )}
+        {view === "expenses" && managed.length > 0 && (
+          <section
+            className="card"
+            id="nouvelle-depense"
+            style={{ marginTop: 24 }}
+          >
+            <h2>Ajouter une dépense</h2>
             <form action={operate} className="form">
               <input type="hidden" name="task" value="expense" />
               <label>
@@ -210,7 +219,7 @@ export default async function Page({
                 <input name="title" minLength={3} maxLength={160} required />
               </label>
               <label>
-                Montant total en MAD
+                Combien ? (MAD)
                 <input
                   name="amount"
                   type="number"
@@ -224,7 +233,7 @@ export default async function Page({
                 <input name="date" type="date" required />
               </label>
               <fieldset>
-                <legend>Lots concernés</legend>
+                <legend>Pour qui ?</legend>
                 {data.units
                   .filter((u) => u.can_manage)
                   .map((u) => (
@@ -234,154 +243,176 @@ export default async function Page({
                     </label>
                   ))}
               </fieldset>
-              <Submit>Créer et répartir</Submit>
+              <Submit>Partager la dépense</Submit>
             </form>
           </section>
         )}
-        <section className="card" id="messages" style={{ marginTop: 24 }}>
-          <h2>Messages avec votre syndic</h2>
-          <p>
-            Chaque conversation concerne un seul lot et ses habitants autorisés.
-          </p>
-          <div className="actions">
-            {data.units.map((u) => (
-              <Link
-                className="button outline"
-                key={u.id}
-                href={"/operations?unit=" + u.id + "#messages"}
-              >
-                {u.residence} · {u.label}
-              </Link>
-            ))}
-          </div>
-          {selected ? (
-            <>
-              <h3 style={{ marginTop: 24 }}>Lot {selected.label}</h3>
-              <div className="chat-log">
-                {[...(messages.data ?? [])].reverse().map((m) => (
-                  <article key={m.id} className="section-note">
-                    <strong>
-                      {m.sender_kind === "syndic" ? "Syndic" : "Habitant"}
-                    </strong>
-                    <p style={{ whiteSpace: "pre-wrap" }}>{m.body}</p>
-                    <small>
-                      {new Date(m.created_at).toLocaleString("fr-MA", {
+        {view === "messages" && (
+          <section className="card" id="messages" style={{ marginTop: 24 }}>
+            <h2>Vos échanges</h2>
+            <p>
+              Chaque conversation concerne un seul lot et ses habitants
+              autorisés.
+            </p>
+            <div className="actions">
+              {data.units.map((u) => (
+                <Link
+                  className="button outline"
+                  key={u.id}
+                  href={"/operations?view=messages&unit=" + u.id}
+                >
+                  {u.residence} · {u.label}
+                </Link>
+              ))}
+            </div>
+            {selected ? (
+              <>
+                <h3 style={{ marginTop: 24 }}>Lot {selected.label}</h3>
+                <div className="chat-log">
+                  {[...(messages.data ?? [])].reverse().map((m) => (
+                    <article key={m.id} className="section-note">
+                      <strong>
+                        {m.sender_kind === "syndic" ? "Syndic" : "Habitant"}
+                      </strong>
+                      <p style={{ whiteSpace: "pre-wrap" }}>{m.body}</p>
+                      <small>
+                        {new Date(m.created_at).toLocaleString("fr-MA", {
+                          timeZone: "Africa/Casablanca",
+                        })}
+                      </small>
+                    </article>
+                  ))}
+                </div>
+                <form action={operate} className="form">
+                  <input type="hidden" name="task" value="chat" />
+                  <input type="hidden" name="target" value={selected.id} />
+                  <label>
+                    Votre message
+                    <textarea name="body" rows={3} required maxLength={3000} />
+                  </label>
+                  <Submit>Envoyer</Submit>
+                </form>
+                <p className="small"></p>
+              </>
+            ) : (
+              <p>Aucun lot associé.</p>
+            )}
+          </section>
+        )}
+        {view === "meetings" && (
+          <section className="card" id="reunions" style={{ marginTop: 24 }}>
+            <h2>Réunions</h2>
+            {meetings.data?.length ? (
+              meetings.data.map((m) => (
+                <article key={m.id} className="section-note">
+                  <strong>{m.title}</strong>
+                  <p>
+                    {new Date(m.starts_at).toLocaleString("fr-MA", {
+                      timeZone: "Africa/Casablanca",
+                    })}{" "}
+                    · Heure du Maroc
+                  </p>
+                  <p>{m.location}</p>
+                  <p style={{ whiteSpace: "pre-wrap" }}>{m.agenda}</p>
+                </article>
+              ))
+            ) : (
+              <p>Aucune réunion programmée.</p>
+            )}
+            {managed.length > 0 && (
+              <details>
+                <summary>Programmer une réunion</summary>
+                <form action={operate} className="form">
+                  <input type="hidden" name="task" value="meeting" />
+                  <label>
+                    Résidence
+                    <select name="target">
+                      {managed.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Objet
+                    <input
+                      name="title"
+                      required
+                      minLength={3}
+                      maxLength={160}
+                    />
+                  </label>
+                  <label>
+                    Date et heure au Maroc
+                    <input name="date" type="datetime-local" required />
+                    <span className="form-note">
+                      Le fuseau horaire du Maroc est appliqué automatiquement.
+                    </span>
+                  </label>
+                  <label>
+                    Lieu ou lien de réunion
+                    <input
+                      name="location"
+                      required
+                      minLength={3}
+                      maxLength={300}
+                    />
+                  </label>
+                  <label>
+                    Ordre du jour
+                    <textarea name="body" maxLength={5000} />
+                  </label>
+                  <Submit>Programmer</Submit>
+                </form>
+              </details>
+            )}
+            <p className="small">
+              Un rappel dans le site apparaît lors d’une visite dans les 24
+              heures précédant la réunion.
+            </p>
+          </section>
+        )}
+        {view === "notifications" && (
+          <section
+            className="card"
+            id="notifications"
+            style={{ marginTop: 24 }}
+          >
+            <h2>Notifications</h2>
+            {inbox.data?.length ? (
+              inbox.data.map((n) => (
+                <article className="list-row" key={n.id}>
+                  <div>
+                    <strong>{n.title}</strong>
+                    <p className="small">
+                      {new Date(n.created_at).toLocaleString("fr-MA", {
                         timeZone: "Africa/Casablanca",
                       })}
-                    </small>
-                  </article>
-                ))}
-              </div>
-              <form action={operate} className="form">
-                <input type="hidden" name="task" value="chat" />
-                <input type="hidden" name="target" value={selected.id} />
-                <label>
-                  Votre message
-                  <textarea name="body" rows={3} required maxLength={3000} />
-                </label>
-                <Submit>Envoyer</Submit>
-              </form>
-              <p className="small">
-                Actualisez la page pour lire les nouveaux messages.
-              </p>
-            </>
-          ) : (
-            <p>Aucun lot associé.</p>
-          )}
-        </section>
-        <section className="card" id="reunions" style={{ marginTop: 24 }}>
-          <h2>Réunions</h2>
-          {meetings.data?.length ? (
-            meetings.data.map((m) => (
-              <article key={m.id} className="section-note">
-                <strong>{m.title}</strong>
-                <p>
-                  {new Date(m.starts_at).toLocaleString("fr-MA", {
-                    timeZone: "Africa/Casablanca",
-                  })}{" "}
-                  · Heure du Maroc
-                </p>
-                <p>{m.location}</p>
-                <p style={{ whiteSpace: "pre-wrap" }}>{m.agenda}</p>
-              </article>
-            ))
-          ) : (
-            <p>Aucune réunion programmée.</p>
-          )}
-          {managed.length > 0 && (
-            <details>
-              <summary>Programmer une réunion</summary>
-              <form action={operate} className="form">
-                <input type="hidden" name="task" value="meeting" />
-                <label>
-                  Résidence
-                  <select name="target">
-                    {managed.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Objet
-                  <input name="title" required minLength={3} maxLength={160} />
-                </label>
-                <label>
-                  Date et heure au Maroc
-                  <input name="date" type="datetime-local" required />
-                  <span className="form-note">
-                    Le fuseau horaire du Maroc est appliqué automatiquement.
-                  </span>
-                </label>
-                <label>
-                  Lieu ou lien de réunion
-                  <input
-                    name="location"
-                    required
-                    minLength={3}
-                    maxLength={300}
-                  />
-                </label>
-                <label>
-                  Ordre du jour
-                  <textarea name="body" maxLength={5000} />
-                </label>
-                <Submit>Programmer</Submit>
-              </form>
-            </details>
-          )}
-          <p className="small">
-            Un rappel dans le site apparaît lors d’une visite dans les 24 heures
-            précédant la réunion.
-          </p>
-        </section>
-        <section className="card" id="notifications" style={{ marginTop: 24 }}>
-          <h2>Notifications</h2>
-          {inbox.data?.length ? (
-            inbox.data.map((n) => (
-              <article className="list-row" key={n.id}>
-                <div>
-                  <strong>{n.title}</strong>
-                  <p className="small">
-                    {new Date(n.created_at).toLocaleString("fr-MA", {
-                      timeZone: "Africa/Casablanca",
-                    })}
-                  </p>
-                </div>
-                {!n.read_at && (
-                  <form action={operate}>
-                    <input type="hidden" name="task" value="read" />
-                    <input type="hidden" name="target" value={n.id} />
-                    <Submit>Marquer comme lu</Submit>
-                  </form>
-                )}
-              </article>
-            ))
-          ) : (
-            <p>Aucune notification.</p>
-          )}
-        </section>
+                    </p>
+                  </div>
+                  {!n.read_at && (
+                    <form action={operate}>
+                      <input type="hidden" name="task" value="read" />
+                      <input type="hidden" name="target" value={n.id} />
+                      <Submit>Marquer comme lu</Submit>
+                    </form>
+                  )}
+                </article>
+              ))
+            ) : (
+              <p>Aucune notification.</p>
+            )}
+          </section>
+        )}
+        {view === "balances" && (
+          <div className="quick-grid">
+            <Link href="/operations?view=expenses">Dépenses et soldes →</Link>
+            <Link href="/operations?view=messages">Écrire au syndic →</Link>
+            <Link href="/incidents">Signaler un problème →</Link>
+            <Link href="/operations/export">Exporter mes comptes →</Link>
+          </div>
+        )}
       </main>
     </div>
   );

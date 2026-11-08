@@ -49,8 +49,10 @@ export default async function Page({
       </header>
       <main className="section">
         <span className="eyebrow">Mon espace résident</span>
-        <h1>La vie de votre résidence</h1>
-        <Link href="/incidents" className="button outline">Signaler un incident</Link>
+        <h1>Chez vous.</h1>
+        <Link href="/incidents" className="button outline">
+          Signaler un incident
+        </Link>
         <Link href="/operations" className="button primary">
           Mes cotisations, messages et réunions
         </Link>
@@ -62,10 +64,7 @@ export default async function Page({
         {invitations.data?.map((i) => (
           <section key={i.id} className="card" style={{ marginBottom: 20 }}>
             <h2>Une invitation vous attend</h2>
-            <p>
-              Acceptez votre association au lot pour accéder aux actualités de
-              sa résidence.
-            </p>
+            <p></p>
             <form action={acceptInvitation}>
               <input type="hidden" name="id" value={i.id} />
               <Submit>Accepter l’invitation</Submit>

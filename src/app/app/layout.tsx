@@ -1,3 +1,4 @@
+import { AppFrame } from "@/components/app-frame";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LayoutDashboard, Building2, Grid2X2, ShieldCheck } from "lucide-react";
@@ -17,53 +18,20 @@ export default async function AppLayout({
   if (!user) redirect("/connexion");
   const { data: isAdmin } = await db.rpc("syndic_is_platform_admin");
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <Brand />
-        <nav>
-          <Link href="/incidents">Incidents et entretien</Link>
-          <Link href="/operations">Cotisations, messages et réunions</Link>
-          {isAdmin === true && (
-            <Link href="/admin">
-              <ShieldCheck size={19} />
-              Administration
-            </Link>
-          )}
-          <Link href="/app">
-            <LayoutDashboard size={19} />
-            Vue d’ensemble
-          </Link>
-          <Link href="/app/residences">
-            <Building2 size={19} />
-            Résidences
-          </Link>
-          <Link href="/app/lots">
-            <Grid2X2 size={19} />
-            Lots
-          </Link>
-          <Link href="/app/communaute">Résidents et activités</Link>
-          <Link href="/resident">Mon espace résident</Link>
-        </nav>
-        <div className="bottom">
-          <ShieldCheck size={22} />
-          <p className="small">
-            Votre espace de gestion
-            <br />
-            SyndiConnect · Version pilote
-          </p>
-        </div>
-      </aside>
-      <div className="workspace">
-        <header className="topbar">
-          <span>{user.email}</span>
+    <AppFrame>
+      <div className="container">
+        <nav className="residence-tabs">
+          <Link href="/app">Vue d’ensemble</Link>
+          <Link href="/app/residences">Résidences</Link>
+          <Link href="/app/lots">Appartements</Link>
+          <Link href="/app/communaute">Habitants</Link>
+          {isAdmin === true && <Link href="/admin">Administration</Link>}
           <form action={signOut}>
-            <button type="submit" className="text-link">
-              Déconnexion
-            </button>
+            <button className="text-link">Déconnexion</button>
           </form>
-        </header>
-        <main className="content">{children}</main>
+        </nav>
+        <main className="section">{children}</main>
       </div>
-    </div>
+    </AppFrame>
   );
 }

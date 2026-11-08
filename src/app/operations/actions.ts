@@ -86,7 +86,8 @@ export async function operate(form: FormData) {
               .min(3)
               .max(160)
               .parse(form.get("title")),
-            meeting_start: z.string()
+            meeting_start: z
+              .string()
               .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)
               .parse(form.get("date")),
             meeting_location: z
@@ -104,8 +105,20 @@ export async function operate(form: FormData) {
     error = true;
   }
   revalidatePath("/operations");
+  const nextView =
+    task === "chat"
+      ? "messages"
+      : task === "meeting"
+        ? "meetings"
+        : task === "read"
+          ? "notifications"
+          : "expenses";
+  const selectedUnit = task === "chat" && id.success ? "&unit=" + id.data : "";
   redirect(
-    "/operations?message=" +
+    "/operations?view=" +
+      nextView +
+      selectedUnit +
+      "&message=" +
       encodeURIComponent(
         error
           ? "Action refusée. Vérifiez les champs, vos droits et les montants."
