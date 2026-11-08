@@ -184,7 +184,7 @@ it("isolates operations and preserves exact allocations and payment balances", a
     await db.exec(`select set_config('request.jwt.claim.sub','${b}',false)`);
     expect(
       (
-        await db.query("select public.syndic_can_access_unit($1) ok", [
+        await db.query<{ok:boolean}>("select public.syndic_can_access_unit($1) ok", [
           units[0],
         ])
       ).rows[0].ok,
