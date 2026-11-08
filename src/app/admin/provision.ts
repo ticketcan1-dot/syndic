@@ -38,7 +38,7 @@ export async function provisionSyndic(form: FormData) {
   );
 }
 export async function provisionResident(form: FormData) {
-  const { db } = await signedIn();
+  const { db, user } = await signedIn();
   const input = z
     .object({
       email: z.email(),
@@ -67,23 +67,15 @@ export async function provisionResident(form: FormData) {
       email_confirm: true,
     });
     if (error || !data.user) throw Error();
-    const { data: invitation, error: inviteError } = await db.rpc(
-      "syndic_invite_resident",
-      { target_unit: input.data.unit, resident_email: input.data.email },
+    const { error: associationError } = await service.rpc(
+      "syndic_provision_resident",
+      {
+        account_id: data.user.id,
+        target_unit: input.data.unit,
+        manager_id: user.id,
+      },
     );
-    if (inviteError) throw Error();
-    const { error: accessError } = await service
-      .from("syndic_resident_access")
-      .insert({
-        unit_id: input.data.unit,
-        user_id: data.user.id,
-        invitation_id: invitation,
-      });
-    if (accessError) throw Error();
-    await service
-      .from("syndic_resident_invitations")
-      .update({ accepted_at: new Date().toISOString() })
-      .eq("id", invitation);
+    if (associationError) throw Error();
     success = true;
   } catch {}
   redirect(

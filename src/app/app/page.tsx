@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { Building2, Grid2X2, Users } from "lucide-react";
 import { workspace } from "@/lib/data";
-import { createOrganization } from "@/app/actions";
-import { Submit } from "@/components/submit";
+
 import { Notice } from "@/components/notice";
 export default async function Page({
   searchParams,
@@ -61,37 +60,35 @@ export default async function Page({
             ))
           ) : (
             <div className="empty">
-              Aucune résidence pour le moment. Créez votre organisation, puis
-              ajoutez votre première résidence.
+              Aucune résidence pour le moment. Votre organisation doit être
+              attribuée par l’administration ; ensuite, ajoutez votre première
+              résidence.
             </div>
           )}
         </section>
         <section className="card">
-          <h2>
-            {data.organizations.length
-              ? "Nouvelle organisation"
-              : "Bienvenue chez vous"}
-          </h2>
-          <p>Une organisation regroupe les résidences que vous gérez.</p>
-          <form className="form" action={createOrganization}>
-            <label>
-              Nom de l’organisation
-              <input
-                name="name"
-                placeholder="Cabinet ou syndic bénévole"
-                required
-                minLength={2}
-                maxLength={120}
-              />
-            </label>
-            <Submit>Créer l’organisation</Submit>
-          </form>
+          <h2>Actions rapides</h2>
+          <p>Votre organisation est attribuée par l’administration.</p>
+          <div className="list">
+            <Link href="/app/residences" className="button outline">
+              Ajouter une résidence
+            </Link>
+            <Link href="/app/communaute" className="button outline">
+              Gérer les habitants
+            </Link>
+            <Link href="/operations" className="button outline">
+              Finances et messages
+            </Link>
+            <Link href="/incidents" className="button outline">
+              Suivre les incidents
+            </Link>
+          </div>
         </section>
       </div>
       <div className="section-note">
         <strong>Votre parcours de démarrage</strong>
         <p style={{ margin: "8px 0 0" }}>
-          1. Créer une organisation → 2. Ajouter une résidence → 3. Enregistrer
+          1. Recevoir votre accès → 2. Ajouter une résidence → 3. Enregistrer
           les lots
         </p>
       </div>

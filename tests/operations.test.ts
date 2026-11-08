@@ -73,6 +73,47 @@ it("isolates operations and preserves exact allocations and payment balances", a
         [r, units],
       ),
     ).rejects.toThrow();
+    await db.exec("reset role; create role service_role;");
+    await db.exec(
+      readFileSync(
+        "supabase/migrations/202611080001_support_and_accounts.sql",
+        "utf8",
+      ),
+    );
+    await db.exec(
+      `set role authenticated; select set_config('request.jwt.claim.sub','${a}',false)`,
+    );
+    const incident = (
+      await db.query<{ id: string }>(
+        "select public.syndic_report_incident($1,'Fuite eau','Fuite dans le couloir','urgent') id",
+        [units[0]],
+      )
+    ).rows[0].id;
+    await expect(
+      db.query("select public.syndic_update_incident($1,'resolved','')", [
+        incident,
+      ]),
+    ).rejects.toThrow();
+    await db.query(
+      "select public.syndic_update_incident($1,'resolved','Reparation terminee')",
+      [incident],
+    );
+    await db.exec(`select set_config('request.jwt.claim.sub','${b}',false)`);
+    expect(
+      (await db.query("select * from public.syndic_incidents")).rows,
+    ).toHaveLength(0);
+    await expect(
+      db.query("select public.syndic_update_incident($1,'open','Intrusion')", [
+        incident,
+      ]),
+    ).rejects.toThrow();
+    await expect(
+      db.query("select public.syndic_provision_resident($1,$2,$3)", [
+        b,
+        units[0],
+        a,
+      ]),
+    ).rejects.toThrow();
   } finally {
     await db.close();
   }

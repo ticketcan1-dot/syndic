@@ -21,6 +21,7 @@ export default async function AppLayout({
       <aside className="sidebar">
         <Brand />
         <nav>
+          <Link href="/incidents">Incidents et entretien</Link>
           <Link href="/operations">Cotisations, messages et réunions</Link>
           {isAdmin === true && (
             <Link href="/admin">

@@ -74,11 +74,17 @@ export default async function Page({
       <main className="section">
         <span className="eyebrow">Votre quotidien</span>
         <h1>Gestion et échanges</h1>
+        <a href="/operations/export" className="button outline">
+          Exporter les cotisations
+        </a>
         <p>Les informations accessibles pour vos lots et vos résidences.</p>
         <nav className="actions" style={{ marginBottom: 24 }}>
           <a href="#comptes" className="button outline">
             Cotisations
           </a>
+          <Link href="/incidents" className="button outline">
+            Incidents
+          </Link>
           <a href="#messages" className="button outline">
             Messages
           </a>
@@ -323,11 +329,7 @@ export default async function Page({
                 </label>
                 <label>
                   Date et heure au Maroc
-                  <input
-                    name="date"
-                    type="datetime-local"
-                    required
-                  />
+                  <input name="date" type="datetime-local" required />
                   <span className="form-note">
                     Le fuseau horaire du Maroc est appliqué automatiquement.
                   </span>

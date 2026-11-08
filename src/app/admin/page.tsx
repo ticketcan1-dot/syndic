@@ -71,6 +71,13 @@ export default async function Page({
       </div>
       <section className="card">
         <h2>Créer un compte syndic</h2>
+        {!process.env.SUPABASE_SECRET_KEY && (
+          <div role="alert" className="notice">
+            La création des comptes nécessite la variable serveur
+            SUPABASE_SECRET_KEY dans Vercel, puis un redéploiement. Les comptes
+            existants continuent de fonctionner.
+          </div>
+        )}
         <p>Le compte est activé immédiatement sans e-mail de confirmation.</p>
         <form action={provisionSyndic} className="form">
           <label>

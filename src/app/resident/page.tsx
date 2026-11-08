@@ -50,6 +50,7 @@ export default async function Page({
       <main className="section">
         <span className="eyebrow">Mon espace résident</span>
         <h1>La vie de votre résidence</h1>
+        <Link href="/incidents" className="button outline">Signaler un incident</Link>
         <Link href="/operations" className="button primary">
           Mes cotisations, messages et réunions
         </Link>
