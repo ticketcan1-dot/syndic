@@ -23,6 +23,7 @@ export async function proxy(request: NextRequest) {
 }
 export const config = {
   matcher: [
+    "/rejoindre/:path*",
     "/",
     "/compte/:path*",
     "/invitation/:path*",

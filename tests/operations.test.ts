@@ -114,6 +114,81 @@ it("isolates operations and preserves exact allocations and payment balances", a
         a,
       ]),
     ).rejects.toThrow();
+    await db.exec("reset role");
+    await db.exec(
+      readFileSync("supabase/migrations/202611080002_join_links.sql", "utf8"),
+    );
+    await db.exec(
+      `set role authenticated; select set_config('request.jwt.claim.sub','${a}',false)`,
+    );
+    const token = (
+      await db.query<{ id: string }>(
+        "select public.syndic_create_join_link($1) id",
+        [units[0]],
+      )
+    ).rows[0].id;
+    const attempt = "33333333-3333-4333-8333-333333333333";
+    await expect(
+      db.query("select public.syndic_reserve_join_link($1,$2)", [
+        token,
+        attempt,
+      ]),
+    ).rejects.toThrow();
+    await db.exec("reset role; set role service_role");
+    expect(
+      (
+        await db.query<{ ok: boolean }>(
+          "select public.syndic_reserve_join_link($1,$2) ok",
+          [token, attempt],
+        )
+      ).rows[0].ok,
+    ).toBe(true);
+    expect(
+      (
+        await db.query<{ ok: boolean }>(
+          "select public.syndic_reserve_join_link($1,$2) ok",
+          [token, b],
+        )
+      ).rows[0].ok,
+    ).toBe(false);
+    await expect(
+      db.query("select public.syndic_finish_join_link($1,$2,$3)", [
+        token,
+        b,
+        b,
+      ]),
+    ).rejects.toThrow();
+    await db.query("select public.syndic_finish_join_link($1,$2,$3)", [
+      token,
+      attempt,
+      b,
+    ]);
+    await expect(
+      db.query("select public.syndic_finish_join_link($1,$2,$3)", [
+        token,
+        attempt,
+        b,
+      ]),
+    ).rejects.toThrow();
+    await db.exec(
+      `reset role; set role authenticated; select set_config('request.jwt.claim.sub','${b}',false)`,
+    );
+    expect(
+      (await db.query("select * from public.syndic_join_links")).rows,
+    ).toHaveLength(0);
+    await expect(
+      db.query("select public.syndic_create_join_link($1)", [units[1]]),
+    ).rejects.toThrow();
+    await db.exec(`select set_config('request.jwt.claim.sub','${a}',false)`);
+    await db.query("select public.syndic_revoke_join_link($1)", [token]);
+    await db.exec(`select set_config('request.jwt.claim.sub','${b}',false)`);
+    expect(
+      (
+        await db.query("select public.syndic_can_access_unit($1) ok", [
+          units[0],
+        ])
+      ).rows[0].ok,
+    ).toBe(false);
   } finally {
     await db.close();
   }

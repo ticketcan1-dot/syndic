@@ -5,6 +5,7 @@ import { Submit } from "@/components/submit";
 import { inviteResident, revokeInvitation, publishPost } from "./actions";
 import { provisionResident } from "@/app/admin/provision";
 import { ShareLink } from "@/components/share-link";
+import { createJoinLink, revokeJoinLink } from "./actions";
 export default async function Page({
   searchParams,
 }: {
@@ -12,6 +13,10 @@ export default async function Page({
 }) {
   const { db } = await signedIn();
   const data = await workspace();
+  const links = await db
+    .from("syndic_join_links")
+    .select("id,unit_id,expires_at,used_by,revoked_at")
+    .order("created_at", { ascending: false });
   const [invitations, posts] = await Promise.all([
     db
       .from("syndic_resident_invitations")
@@ -38,6 +43,54 @@ export default async function Page({
         message={(await searchParams).message}
         error={data.error || Boolean(invitations.error || posts.error)}
       />
+      <section className="card" style={{ marginBottom: 24 }}>
+        <h2>Inviter par lien</h2>
+        {data.units.length > 0 && (
+          <form action={createJoinLink} className="form">
+            <label>
+              Appartement
+              <select name="unit_id">
+                {data.units.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {data.residences.find((r) => r.id === u.residence_id)?.name}{" "}
+                    · {u.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Submit>Créer un lien d’invitation</Submit>
+          </form>
+        )}
+        {links.data?.map((link) => (
+          <article key={link.id} className="list-row">
+            <div>
+              <strong>
+                {data.units.find((u) => u.id === link.unit_id)?.label}
+              </strong>
+              <p className="small">
+                {link.revoked_at
+                  ? "Révoqué"
+                  : link.used_by
+                    ? "Compte créé"
+                    : new Date(link.expires_at) < new Date()
+                      ? "Expiré"
+                      : "En attente"}
+              </p>
+              {!link.used_by && !link.revoked_at && (
+                <ShareLink
+                  url={`${process.env.NEXT_PUBLIC_SITE_URL}/rejoindre/${link.id}`}
+                />
+              )}
+            </div>
+            {!link.revoked_at && (
+              <form action={revokeJoinLink}>
+                <input type="hidden" name="token" value={link.id} />
+                <Submit>Révoquer</Submit>
+              </form>
+            )}
+          </article>
+        ))}
+      </section>
       <div className="split">
         <section className="card">
           <h2>Créer un accès habitant</h2>

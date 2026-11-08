@@ -7,6 +7,24 @@ function result(message: string): never {
   revalidatePath("/app/communaute");
   redirect("/app/communaute?message=" + encodeURIComponent(message));
 }
+export async function createJoinLink(form: FormData) {
+  const { db } = await signedIn();
+  const unit = z.uuid().safeParse(form.get("unit_id"));
+  if (!unit.success) result("Choisissez un appartement.");
+  const { error } = await db.rpc("syndic_create_join_link", {
+    target_unit: unit.data,
+  });
+  result(error ? "Création du lien refusée." : "Lien créé pour 7 jours.");
+}
+export async function revokeJoinLink(form: FormData) {
+  const { db } = await signedIn();
+  const token = z.uuid().safeParse(form.get("token"));
+  if (!token.success) result("Lien invalide.");
+  const { error } = await db.rpc("syndic_revoke_join_link", {
+    token: token.data,
+  });
+  result(error ? "Révocation refusée." : "Lien et accès associé révoqués.");
+}
 export async function inviteResident(form: FormData) {
   const { db } = await signedIn();
   const input = z
