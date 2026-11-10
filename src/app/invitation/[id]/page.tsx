@@ -1,3 +1,5 @@
+import { LocalizedInput } from "@/components/i18n-input";
+import { I18nText } from "@/components/i18n";
 import Link from "next/link";
 import { signedIn } from "@/lib/access";
 import { acceptInvitation } from "@/app/resident/actions";
@@ -22,16 +24,26 @@ export default async function Page({
   return (
     <main className="auth-shell">
       <section className="card auth-card">
-        <span className="eyebrow">Votre résidence</span>
-        <h1>{valid ? "Bienvenue chez vous." : "Invitation indisponible"}</h1>
+        <span className="eyebrow">
+          <I18nText text="Votre résidence" />
+        </span>
+        <h1>
+          <I18nText
+            text={String(
+              valid ? "Bienvenue chez vous." : "Invitation indisponible",
+            )}
+          />
+        </h1>
         {valid ? (
           <form action={acceptInvitation}>
-            <input type="hidden" name="id" value={data.id} />
-            <Submit>Rejoindre mon appartement</Submit>
+            <LocalizedInput type="hidden" name="id" value={data.id} />
+            <Submit>
+              <I18nText text="Rejoindre mon appartement" />
+            </Submit>
           </form>
         ) : (
           <Link className="button primary" href="/resident">
-            Mon espace
+            <I18nText text="Mon espace" />
           </Link>
         )}
       </section>

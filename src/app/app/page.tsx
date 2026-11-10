@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n";
 import Link from "next/link";
 import { Building2, Grid2X2, Users } from "lucide-react";
 import { workspace } from "@/lib/data";
@@ -13,12 +14,18 @@ export default async function Page({
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">Votre espace de gestion</span>
-          <h1>Vue d’ensemble</h1>
-          <p>Vos copropriétés, au même endroit.</p>
+          <span className="eyebrow">
+            <I18nText text="Votre espace de gestion" />
+          </span>
+          <h1>
+            <I18nText text="Vue d’ensemble" />
+          </h1>
+          <p>
+            <I18nText text="Vos copropriétés, au même endroit." />
+          </p>
         </div>
         <Link href="/app/residences" className="button primary">
-          Ajouter une résidence
+          <I18nText text="Ajouter une résidence" />
         </Link>
       </div>
       <Notice error={data.error} message={(await searchParams).message} />
@@ -32,7 +39,9 @@ export default async function Page({
           return (
             <div className="card" key={String(label)}>
               <I size={22} />
-              <p style={{ margin: "12px 0 0" }}>{String(label)}</p>
+              <p style={{ margin: "12px 0 0" }}>
+                <I18nText text={String(String(label))} />
+              </p>
               <div className="stat-number">
                 {data.error ? "—" : String(count)}
               </div>
@@ -42,8 +51,12 @@ export default async function Page({
       </div>
       <div className="split">
         <section className="card">
-          <h2>Vos résidences</h2>
-          <p>Retrouvez les copropriétés de vos organisations.</p>
+          <h2>
+            <I18nText text="Vos résidences" />
+          </h2>
+          <p>
+            <I18nText text="Retrouvez les copropriétés de vos organisations." />
+          </p>
           {data.residences.length ? (
             data.residences.map((r) => (
               <div className="list-row" key={r.id}>
@@ -54,42 +67,45 @@ export default async function Page({
                   </p>
                 </div>
                 <Link className="text-link small" href="/app/lots">
-                  Voir les lots
+                  <I18nText text="Voir les lots" />
                 </Link>
               </div>
             ))
           ) : (
             <div className="empty">
-              Aucune résidence pour le moment. Votre organisation doit être
-              attribuée par l’administration ; ensuite, ajoutez votre première
-              résidence.
+              <I18nText text="Aucune résidence pour le moment. Votre organisation doit être attribuée par l’administration ; ensuite, ajoutez votre première résidence." />
             </div>
           )}
         </section>
         <section className="card">
-          <h2>Actions rapides</h2>
-          <p>Votre organisation est attribuée par l’administration.</p>
+          <h2>
+            <I18nText text="Actions rapides" />
+          </h2>
+          <p>
+            <I18nText text="Votre organisation est attribuée par l’administration." />
+          </p>
           <div className="list">
             <Link href="/app/residences" className="button outline">
-              Ajouter une résidence
+              <I18nText text="Ajouter une résidence" />
             </Link>
             <Link href="/app/communaute" className="button outline">
-              Gérer les habitants
+              <I18nText text="Gérer les habitants" />
             </Link>
             <Link href="/operations" className="button outline">
-              Finances et messages
+              <I18nText text="Finances et messages" />
             </Link>
             <Link href="/incidents" className="button outline">
-              Suivre les incidents
+              <I18nText text="Suivre les incidents" />
             </Link>
           </div>
         </section>
       </div>
       <div className="section-note">
-        <strong>Votre parcours de démarrage</strong>
+        <strong>
+          <I18nText text="Votre parcours de démarrage" />
+        </strong>
         <p style={{ margin: "8px 0 0" }}>
-          1. Recevoir votre accès → 2. Ajouter une résidence → 3. Enregistrer
-          les lots
+          <I18nText text="1. Recevoir votre accès → 2. Ajouter une résidence → 3. Enregistrer les lots" />
         </p>
       </div>
     </>

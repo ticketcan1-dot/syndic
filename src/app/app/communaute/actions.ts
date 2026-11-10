@@ -3,9 +3,32 @@ import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { signedIn } from "@/lib/access";
+import { residenceSchema, unitSchema } from "@/lib/validation";
 function result(message: string): never {
   revalidatePath("/app/communaute");
   redirect("/app/communaute?message=" + encodeURIComponent(message));
+}
+export async function setupResidence(form: FormData) {
+  const { db } = await signedIn();
+  const input = residenceSchema.safeParse(Object.fromEntries(form));
+  if (!input.success) result("Vérifiez les informations de la résidence.");
+  const { error } = await db.from("syndic_residences").insert(input.data);
+  result(
+    error
+      ? "Création refusée. Contactez votre administrateur."
+      : "Résidence créée. Ajoutez maintenant un appartement.",
+  );
+}
+export async function setupUnit(form: FormData) {
+  const { db } = await signedIn();
+  const input = unitSchema.safeParse(Object.fromEntries(form));
+  if (!input.success) result("Vérifiez les informations de l’appartement.");
+  const { error } = await db.from("syndic_units").insert(input.data);
+  result(
+    error
+      ? "Création refusée ou appartement déjà existant."
+      : "Appartement ajouté. Vous pouvez maintenant inviter un habitant.",
+  );
 }
 export async function createJoinLink(form: FormData) {
   const { db } = await signedIn();

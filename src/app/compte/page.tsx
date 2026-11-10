@@ -1,3 +1,5 @@
+import { LocalizedInput } from "@/components/i18n-input";
+import { I18nText } from "@/components/i18n";
 import { signedIn } from "@/lib/access";
 import { AppFrame } from "@/components/app-frame";
 import { Submit } from "@/components/submit";
@@ -12,13 +14,15 @@ export default async function Page({
   return (
     <AppFrame>
       <main className="container section">
-        <h1>Mon profil</h1>
+        <h1>
+          <I18nText text="Mon profil" />
+        </h1>
         <Notice message={(await searchParams).message} />
         <section className="card">
           <form action={saveNickname} className="form">
             <label>
-              Pseudo
-              <input
+              <I18nText text="Pseudo" />
+              <LocalizedInput
                 name="nickname"
                 defaultValue={
                   typeof user.user_metadata?.nickname === "string"
@@ -31,7 +35,9 @@ export default async function Page({
               />
             </label>
             <p>{user.email}</p>
-            <Submit>Enregistrer</Submit>
+            <Submit>
+              <I18nText text="Enregistrer" />
+            </Submit>
           </form>
         </section>
       </main>

@@ -1,3 +1,5 @@
+import { LocalizedInput } from "@/components/i18n-input";
+import { I18nText } from "@/components/i18n";
 import { z } from "zod";
 import Link from "next/link";
 import { provisionClient } from "@/lib/provision";
@@ -58,18 +60,24 @@ export default async function Page({
         <Brand />
         {residence ? (
           <>
-            <span className="eyebrow">Bienvenue chez vous</span>
-            <h1>Bonjour 👋</h1>
+            <span className="eyebrow">
+              <I18nText text="Bienvenue chez vous" />
+            </span>
+            <h1>
+              <I18nText text="Bonjour 👋" />
+            </h1>
             <p>
-              Vous êtes invité à rejoindre <strong>{residence}</strong>, gérée
-              par <strong>{manager}</strong>.
+              <I18nText text="Vous êtes invité à rejoindre" />
+              <strong>{residence}</strong>
+              <I18nText text=", gérée par" />
+              <strong>{manager}</strong>.
             </p>
             <Notice message={(await searchParams).message} />
             <form action={joinResidence} className="form">
-              <input type="hidden" name="token" value={token} />
+              <LocalizedInput type="hidden" name="token" value={token} />
               <label>
-                Prénom
-                <input
+                <I18nText text="Prénom" />
+                <LocalizedInput
                   name="first_name"
                   autoComplete="given-name"
                   required
@@ -78,8 +86,8 @@ export default async function Page({
                 />
               </label>
               <label>
-                Nom
-                <input
+                <I18nText text="Nom" />
+                <LocalizedInput
                   name="last_name"
                   autoComplete="family-name"
                   required
@@ -88,8 +96,8 @@ export default async function Page({
                 />
               </label>
               <label>
-                Pseudo
-                <input
+                <I18nText text="Pseudo" />
+                <LocalizedInput
                   name="nickname"
                   autoComplete="nickname"
                   required
@@ -98,8 +106,8 @@ export default async function Page({
                 />
               </label>
               <label>
-                Téléphone
-                <input
+                <I18nText text="Téléphone" />
+                <LocalizedInput
                   name="phone"
                   type="tel"
                   autoComplete="tel"
@@ -108,8 +116,8 @@ export default async function Page({
                 />
               </label>
               <label>
-                E-mail de connexion
-                <input
+                <I18nText text="E-mail de connexion" />
+                <LocalizedInput
                   name="email"
                   type="email"
                   autoComplete="email"
@@ -118,8 +126,8 @@ export default async function Page({
                 />
               </label>
               <label>
-                Mot de passe
-                <input
+                <I18nText text="Mot de passe" />
+                <LocalizedInput
                   name="password"
                   type="password"
                   autoComplete="new-password"
@@ -127,20 +135,25 @@ export default async function Page({
                   minLength={12}
                   maxLength={128}
                 />
-                <span className="form-note">12 caractères minimum</span>
+                <span className="form-note">
+                  <I18nText text="12 caractères minimum" />
+                </span>
               </label>
-              <Submit>Rejoindre ma résidence</Submit>
+              <Submit>
+                <I18nText text="Rejoindre ma résidence" />
+              </Submit>
             </form>
           </>
         ) : (
           <>
-            <h1>Invitation indisponible</h1>
+            <h1>
+              <I18nText text="Invitation indisponible" />
+            </h1>
             <p>
-              Ce lien a expiré, a déjà été utilisé ou a été révoqué. Demandez un
-              nouveau lien à votre syndic.
+              <I18nText text="Ce lien a expiré, a déjà été utilisé ou a été révoqué. Demandez un nouveau lien à votre syndic." />
             </p>
             <Link href="/connexion" className="button primary">
-              Se connecter
+              <I18nText text="Se connecter" />
             </Link>
           </>
         )}

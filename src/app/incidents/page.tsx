@@ -1,3 +1,6 @@
+import { intlLocale as getIntlLocale } from "@/lib/locale-server";
+import { LocalizedInput } from "@/components/i18n-input";
+import { I18nText } from "@/components/i18n";
 import Link from "next/link";
 import { signedIn } from "@/lib/access";
 import { Brand } from "@/components/brand";
@@ -16,6 +19,8 @@ export default async function Page({
 }: {
   searchParams: Promise<{ message?: string }>;
 }) {
+  const intlLocale = await getIntlLocale();
+
   const { db } = await signedIn();
   const [context, incidents] = await Promise.all([
     db.rpc("syndic_operations_context"),
@@ -36,62 +41,91 @@ export default async function Page({
       <header className="public-nav">
         <Brand />
         <Link href="/operations" className="button outline">
-          Gestion quotidienne
+          <I18nText text="Gestion quotidienne" />
         </Link>
       </header>
       <main className="section">
-        <span className="eyebrow">Entretien et demandes</span>
-        <h1>Incidents</h1>
-        <p>Signalez un problème et suivez sa prise en charge.</p>
+        <span className="eyebrow">
+          <I18nText text="Entretien et demandes" />
+        </span>
+        <h1>
+          <I18nText text="Incidents" />
+        </h1>
+        <p>
+          <I18nText text="Signalez un problème et suivez sa prise en charge." />
+        </p>
         <Notice
           message={(await searchParams).message}
           error={Boolean(context.error || incidents.error)}
         />
         <div className="split">
           <section className="card">
-            <h2>Suivi des demandes</h2>
-            {!incidents.data?.length && <p>Aucun incident déclaré.</p>}
+            <h2>
+              <I18nText text="Suivi des demandes" />
+            </h2>
+            {!incidents.data?.length && (
+              <p>
+                <I18nText text="Aucun incident déclaré." />
+              </p>
+            )}
             {incidents.data?.map((i) => {
               const unit = units.find((u) => u.id === i.unit_id);
               return (
                 <details key={i.id}>
                   <summary>
-                    {i.title} · {labels[i.status]}{" "}
-                    {i.priority === "urgent" ? "· Urgent" : ""}
+                    {i.title} · <I18nText text={String(labels[i.status])} />
+                    <I18nText text={String(" ")} />
+                    <I18nText
+                      text={String(i.priority === "urgent" ? "· Urgent" : "")}
+                    />
                   </summary>
                   <p className="small">
-                    {unit?.residence} · {unit?.label} ·{" "}
-                    {new Date(i.created_at).toLocaleDateString("fr-MA")}
+                    {unit?.residence} · {unit?.label} ·
+                    <I18nText text={String(" ")} />
+                    {new Date(i.created_at).toLocaleDateString(intlLocale)}
                   </p>
                   <p style={{ whiteSpace: "pre-wrap" }}>{i.description}</p>
                   {i.resolution && (
                     <p>
-                      <strong>Compte rendu :</strong> {i.resolution}
+                      <strong>
+                        <I18nText text="Compte rendu :" />
+                      </strong>{" "}
+                      {i.resolution}
                     </p>
                   )}
                   {unit?.can_manage && (
                     <form action={incidentAction} className="form">
-                      <input type="hidden" name="task" value="update" />
-                      <input type="hidden" name="target" value={i.id} />
+                      <LocalizedInput
+                        type="hidden"
+                        name="task"
+                        value="update"
+                      />
+                      <LocalizedInput
+                        type="hidden"
+                        name="target"
+                        value={i.id}
+                      />
                       <label>
-                        Statut
+                        <I18nText text="Statut" />
                         <select name="status" defaultValue={i.status}>
                           {Object.entries(labels).map(([v, t]) => (
                             <option key={v} value={v}>
-                              {t}
+                              <I18nText text={String(t)} />
                             </option>
                           ))}
                         </select>
                       </label>
                       <label>
-                        Compte rendu
+                        <I18nText text="Compte rendu" />
                         <textarea
                           name="resolution"
                           defaultValue={i.resolution}
                           maxLength={5000}
                         />
                       </label>
-                      <Submit>Mettre à jour</Submit>
+                      <Submit>
+                        <I18nText text="Mettre à jour" />
+                      </Submit>
                     </form>
                   )}
                 </details>
@@ -99,12 +133,14 @@ export default async function Page({
             })}
           </section>
           <section className="card">
-            <h2>Déclarer un incident</h2>
+            <h2>
+              <I18nText text="Déclarer un incident" />
+            </h2>
             {units.length ? (
               <form action={incidentAction} className="form">
-                <input type="hidden" name="task" value="report" />
+                <LocalizedInput type="hidden" name="task" value="report" />
                 <label>
-                  Lot
+                  <I18nText text="Lot" />
                   <select name="target">
                     {units.map((u) => (
                       <option key={u.id} value={u.id}>
@@ -114,11 +150,16 @@ export default async function Page({
                   </select>
                 </label>
                 <label>
-                  Objet
-                  <input name="title" required minLength={3} maxLength={160} />
+                  <I18nText text="Objet" />
+                  <LocalizedInput
+                    name="title"
+                    required
+                    minLength={3}
+                    maxLength={160}
+                  />
                 </label>
                 <label>
-                  Description
+                  <I18nText text="Description" />
                   <textarea
                     name="description"
                     required
@@ -128,16 +169,24 @@ export default async function Page({
                   />
                 </label>
                 <label>
-                  Priorité
+                  <I18nText text="Priorité" />
                   <select name="priority">
-                    <option value="normal">Normale</option>
-                    <option value="urgent">Urgente</option>
+                    <option value="normal">
+                      <I18nText text="Normale" />
+                    </option>
+                    <option value="urgent">
+                      <I18nText text="Urgente" />
+                    </option>
                   </select>
                 </label>
-                <Submit>Déclarer</Submit>
+                <Submit>
+                  <I18nText text="Déclarer" />
+                </Submit>
               </form>
             ) : (
-              <p>Votre syndic doit d’abord vous associer à un lot.</p>
+              <p>
+                <I18nText text="Votre syndic doit d’abord vous associer à un lot." />
+              </p>
             )}
           </section>
         </div>

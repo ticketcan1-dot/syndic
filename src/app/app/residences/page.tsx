@@ -1,3 +1,5 @@
+import { LocalizedInput } from "@/components/i18n-input";
+import { I18nText } from "@/components/i18n";
 import { workspace } from "@/lib/data";
 import { createResidence } from "@/app/actions";
 import { Submit } from "@/components/submit";
@@ -13,14 +15,20 @@ export default async function Page({
     <>
       <div className="page-heading">
         <div>
-          <h1>Résidences</h1>
-          <p>Un carnet d’adresses pour vos copropriétés.</p>
+          <h1>
+            <I18nText text="Résidences" />
+          </h1>
+          <p>
+            <I18nText text="Un carnet d’adresses pour vos copropriétés." />
+          </p>
         </div>
       </div>
       <Notice error={data.error} message={(await searchParams).message} />
       <div className="split">
         <section className="card">
-          <h2>Votre portefeuille</h2>
+          <h2>
+            <I18nText text="Votre portefeuille" />
+          </h2>
           {data.residences.length ? (
             data.residences.map((r) => (
               <article className="list-row" key={r.id}>
@@ -30,23 +38,26 @@ export default async function Page({
                   <span className="badge">{r.city}</span>
                 </div>
                 <span className="small">
-                  {data.units.filter((u) => u.residence_id === r.id).length}{" "}
-                  lots
+                  {data.units.filter((u) => u.residence_id === r.id).length}
+                  <I18nText text={String(" ")} />
+                  <I18nText text="lots" />
                 </span>
               </article>
             ))
           ) : (
             <p className="empty">
-              Vos résidences apparaîtront ici après leur création.
+              <I18nText text="Vos résidences apparaîtront ici après leur création." />
             </p>
           )}
         </section>
         <section className="card">
-          <h2>Ajouter une résidence</h2>
+          <h2>
+            <I18nText text="Ajouter une résidence" />
+          </h2>
           {data.organizations.length ? (
             <form className="form" action={createResidence}>
               <label>
-                Organisation
+                <I18nText text="Organisation" />
                 <select name="organization_id" required>
                   {data.organizations.map((o) => (
                     <option key={o.id} value={o.id}>
@@ -56,8 +67,8 @@ export default async function Page({
                 </select>
               </label>
               <label>
-                Nom
-                <input
+                <I18nText text="Nom" />
+                <LocalizedInput
                   name="name"
                   required
                   minLength={2}
@@ -66,20 +77,33 @@ export default async function Page({
                 />
               </label>
               <label>
-                Adresse
-                <input name="address" required minLength={4} maxLength={300} />
+                <I18nText text="Adresse" />
+                <LocalizedInput
+                  name="address"
+                  required
+                  minLength={4}
+                  maxLength={300}
+                />
               </label>
               <label>
-                Ville
-                <input name="city" required minLength={2} maxLength={80} />
+                <I18nText text="Ville" />
+                <LocalizedInput
+                  name="city"
+                  required
+                  minLength={2}
+                  maxLength={80}
+                />
               </label>
-              <Submit>Créer la résidence</Submit>
+              <Submit>
+                <I18nText text="Créer la résidence" />
+              </Submit>
             </form>
           ) : (
             <p>
-              Commencez par{" "}
+              <I18nText text="Commencez par" />
+              <I18nText text={String(" ")} />
               <Link className="text-link" href="/app">
-                créer une organisation
+                <I18nText text="créer une organisation" />
               </Link>
               .
             </p>

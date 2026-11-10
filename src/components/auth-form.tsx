@@ -1,3 +1,5 @@
+import { LocalizedInput } from "@/components/i18n-input";
+import { I18nText } from "@/components/i18n";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { Submit } from "@/components/submit";
@@ -13,21 +15,31 @@ export function AuthForm({
     <main className="auth-shell">
       <div className="card auth-card">
         <Brand />
-        <h1>{signup ? "Créer votre espace" : "Heureux de vous retrouver"}</h1>
+        <h1>
+          <I18nText
+            text={String(
+              signup ? "Créer votre espace" : "Heureux de vous retrouver",
+            )}
+          />
+        </h1>
         <p>
-          {signup
-            ? "Commencez par votre compte, puis créez votre première résidence."
-            : "Connectez-vous pour retrouver vos résidences."}
+          <I18nText
+            text={String(
+              signup
+                ? "Commencez par votre compte, puis créez votre première résidence."
+                : "Connectez-vous pour retrouver vos résidences.",
+            )}
+          />
         </p>
         {message && (
           <div className="notice" role="status">
-            {message}
+            <I18nText text={message} />
           </div>
         )}
         <form action={signup ? signUp : signIn} className="form">
           <label>
-            Adresse e-mail
-            <input
+            <I18nText text="Adresse e-mail" />
+            <LocalizedInput
               name="email"
               type="email"
               autoComplete="email"
@@ -36,8 +48,8 @@ export function AuthForm({
             />
           </label>
           <label>
-            Mot de passe
-            <input
+            <I18nText text="Mot de passe" />
+            <LocalizedInput
               name="password"
               type="password"
               autoComplete={signup ? "new-password" : "current-password"}
@@ -48,33 +60,43 @@ export function AuthForm({
           </label>
           {signup && (
             <p className="form-note">
-              12 caractères minimum. Un e-mail de confirmation vous sera envoyé.
+              <I18nText text="12 caractères minimum. Un e-mail de confirmation vous sera envoyé." />
             </p>
           )}
-          <Submit>{signup ? "Créer mon compte" : "Se connecter"}</Submit>
+          <Submit>
+            <I18nText
+              text={String(signup ? "Créer mon compte" : "Se connecter")}
+            />
+          </Submit>
         </form>
         <p className="small" style={{ marginTop: 24 }}>
-          Votre compte est fourni par votre administrateur ou votre syndic.
+          <I18nText text="Votre compte est fourni par votre administrateur ou votre syndic." />
           <Link
             className="text-link"
             href={signup ? "/connexion" : "/inscription"}
           >
-            {signup ? "Se connecter" : "Accès sur autorisation"}
+            <I18nText
+              text={String(signup ? "Se connecter" : "Accès sur autorisation")}
+            />
           </Link>
         </p>
         {!signup && (
           <details className="auth-divider">
-            <summary>Mot de passe oublié ?</summary>
+            <summary>
+              <I18nText text="Mot de passe oublié ?" />
+            </summary>
             <form
               action={resetPassword}
               className="form"
               style={{ marginTop: 16 }}
             >
               <label>
-                Votre e-mail
-                <input name="email" type="email" required />
+                <I18nText text="Votre e-mail" />
+                <LocalizedInput name="email" type="email" required />
               </label>
-              <Submit>Envoyer le lien</Submit>
+              <Submit>
+                <I18nText text="Envoyer le lien" />
+              </Submit>
             </form>
           </details>
         )}

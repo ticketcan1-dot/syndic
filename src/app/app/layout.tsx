@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n";
 import { AppFrame } from "@/components/app-frame";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -21,13 +22,27 @@ export default async function AppLayout({
     <AppFrame>
       <div className="container">
         <nav className="residence-tabs">
-          <Link href="/app">Vue d’ensemble</Link>
-          <Link href="/app/residences">Résidences</Link>
-          <Link href="/app/lots">Appartements</Link>
-          <Link href="/app/communaute">Habitants</Link>
-          {isAdmin === true && <Link href="/admin">Administration</Link>}
+          <Link href="/app">
+            <I18nText text="Vue d’ensemble" />
+          </Link>
+          <Link href="/app/residences">
+            <I18nText text="Résidences" />
+          </Link>
+          <Link href="/app/lots">
+            <I18nText text="Appartements" />
+          </Link>
+          <Link href="/app/communaute">
+            <I18nText text="Habitants" />
+          </Link>
+          {isAdmin === true && (
+            <Link href="/admin">
+              <I18nText text="Administration" />
+            </Link>
+          )}
           <form action={signOut}>
-            <button className="text-link">Déconnexion</button>
+            <button className="text-link">
+              <I18nText text="Déconnexion" />
+            </button>
           </form>
         </nav>
         <main className="section">{children}</main>

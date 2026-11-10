@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n";
 export function Notice({
   message,
   error,
@@ -9,13 +10,12 @@ export function Notice({
     <>
       {error && (
         <div role="alert" className="notice">
-          Les données sont temporairement indisponibles. Vérifiez la connexion
-          et l’installation de la migration SyndiConnect.
+          <I18nText text="Les données sont temporairement indisponibles. Vérifiez la connexion et l’installation de la migration SyndiConnect." />
         </div>
       )}
       {message && (
         <div role="status" className="notice">
-          {message}
+          <I18nText text={message} />
         </div>
       )}
     </>

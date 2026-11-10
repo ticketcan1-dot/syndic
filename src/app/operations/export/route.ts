@@ -1,10 +1,12 @@
 import { signedIn } from "@/lib/access";
+import { currentLocale } from "@/lib/locale-server";
 function cell(value: unknown) {
   let text = String(value ?? "");
   if (/^[=+@\-\t\r]/.test(text)) text = "'" + text;
   return '"' + text.replaceAll('"', '""') + '"';
 }
 export async function GET() {
+  const locale = await currentLocale();
   const { db } = await signedIn();
   const [context, charges, payments, expenses] = await Promise.all([
     db.rpc("syndic_operations_context"),
@@ -13,14 +15,14 @@ export async function GET() {
     db.from("syndic_expense_entries").select("*"),
   ]);
   if ([context, charges, payments, expenses].some((r) => r.error))
-    return new Response("Export indisponible", { status: 503 });
+    return new Response(locale === "ar" ? "التصدير غير متاح" : locale === "en" ? "Export unavailable" : "Export indisponible", { status: 503 });
   const units = (context.data?.units ?? []) as {
     id: string;
     label: string;
     residence: string;
   }[];
   const rows = [
-    [
+    locale === "ar" ? ["الإقامة", "الوحدة", "الموضوع", "تاريخ الاستحقاق", "المستحق MAD", "المدفوع MAD", "الرصيد MAD"] : locale === "en" ? ["Residence", "Unit", "Subject", "Due date", "Charged MAD", "Paid MAD", "Balance MAD"] : [
       "Résidence",
       "Lot",
       "Objet",

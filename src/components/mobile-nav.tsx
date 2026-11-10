@@ -1,8 +1,11 @@
 "use client";
+import { I18nText, translate, useLocale } from "@/components/i18n";
+
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Home, Wallet, MessageCircle, CalendarDays, Users } from "lucide-react";
 export function MobileNav() {
+  const locale = useLocale();
   const path = usePathname();
   const query = useSearchParams();
   const view = query.get("view") ?? "balances";
@@ -39,7 +42,7 @@ export function MobileNav() {
     },
   ];
   return (
-    <nav className="mobile-nav" aria-label="Navigation principale">
+    <nav className="mobile-nav" aria-label={translate("Navigation principale", locale)}>
       {items.map(({ href, title, icon: Icon, active }) => (
         <Link
           key={title}
@@ -48,7 +51,9 @@ export function MobileNav() {
           aria-current={active ? "page" : undefined}
         >
           <Icon size={22} />
-          <span>{title}</span>
+          <span>
+            <I18nText text={String(title)} />
+          </span>
         </Link>
       ))}
     </nav>

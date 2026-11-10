@@ -1,3 +1,6 @@
+import { intlLocale as getIntlLocale } from "@/lib/locale-server";
+import { LocalizedInput } from "@/components/i18n-input";
+import { I18nText, SystemNotification } from "@/components/i18n";
 import Link from "next/link";
 import { signedIn } from "@/lib/access";
 import { Notice } from "@/components/notice";
@@ -14,16 +17,19 @@ type Context = {
   }[];
   residences: { id: string; name: string; can_manage: boolean }[];
 };
-const mad = (v: number) =>
-  new Intl.NumberFormat("fr-MA", { style: "currency", currency: "MAD" }).format(
-    v / 100,
-  );
 export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
 }: {
   searchParams: Promise<{ message?: string; unit?: string; view?: string }>;
 }) {
+  const intlLocale = await getIntlLocale();
+  const mad = (v: number) =>
+    new Intl.NumberFormat(intlLocale, {
+      style: "currency",
+      currency: "MAD",
+    }).format(v / 100);
+
   const { db } = await signedIn();
   const query = await searchParams;
   const view = [
@@ -77,17 +83,21 @@ export default async function Page({
       <main className="section">
         <div className="page-heading">
           <div>
-            <span className="eyebrow">Ma résidence</span>
+            <span className="eyebrow">
+              <I18nText text="Ma résidence" />
+            </span>
             <h1>
-              {
-                {
-                  balances: "Les comptes, simplement.",
-                  expenses: "Dépenses partagées",
-                  messages: "Conversations",
-                  meetings: "La vie de la résidence",
-                  notifications: "Notifications",
-                }[view]
-              }
+              <I18nText
+                text={
+                  {
+                    balances: "Les comptes, simplement.",
+                    expenses: "Dépenses partagées",
+                    messages: "Conversations",
+                    meetings: "La vie de la résidence",
+                    notifications: "Notifications",
+                  }[view] ?? "Les comptes, simplement."
+                }
+              />
             </h1>
           </div>
           {managed.length > 0 && (
@@ -95,7 +105,7 @@ export default async function Page({
               href="/operations?view=expenses#nouvelle-depense"
               className="button primary"
             >
-              + Ajouter
+              <I18nText text="+ Ajouter" />
             </Link>
           )}
         </div>
@@ -120,7 +130,9 @@ export default async function Page({
                 ["À régler", total - received],
               ].map(([label, value]) => (
                 <section className="card" key={label}>
-                  <p>{label}</p>
+                  <p>
+                    <I18nText text={String(label)} />
+                  </p>
                   <div className="stat-number">{mad(Number(value))}</div>
                 </section>
               ))}
@@ -129,8 +141,14 @@ export default async function Page({
         )}
         {(view === "balances" || view === "expenses") && (
           <section className="card" id="comptes">
-            <h2>Qui doit quoi ?</h2>
-            {!charges.data?.length && <p>Aucune cotisation pour le moment.</p>}
+            <h2>
+              <I18nText text="Qui doit quoi ?" />
+            </h2>
+            {!charges.data?.length && (
+              <p>
+                <I18nText text="Aucune cotisation pour le moment." />
+              </p>
+            )}
             {charges.data?.map((c) => {
               const u = data.units.find((u) => u.id === c.unit_id);
               const e = expenses.data?.find((e) => e.id === c.expense_id);
@@ -138,28 +156,42 @@ export default async function Page({
               return (
                 <details key={c.id}>
                   <summary>
-                    {u?.label} · {e?.title} — {mad(balance)} à régler
+                    {u?.label} · {e?.title} — {mad(balance)}
+                    <I18nText text="à régler" />
                   </summary>
                   <p>
-                    Montant : {mad(Number(c.amount_cents))} · Échéance :{" "}
+                    <I18nText text="Montant :" />
+                    {mad(Number(c.amount_cents))}
+                    <I18nText text="· Échéance :" />
+                    <I18nText text={String(" ")} />
                     {e?.due_date}
                   </p>
                   {payments.data
                     ?.filter((p) => p.charge_id === c.id)
                     .map((p) => (
                       <p key={p.id} className="small">
-                        {p.paid_on} · {mad(Number(p.amount_cents))} · Référence{" "}
+                        {p.paid_on} · {mad(Number(p.amount_cents))}
+                        <I18nText text="· Référence" />
+                        <I18nText text={String(" ")} />
                         {p.reference}
                       </p>
                     ))}
                   {u?.can_manage && balance > 0 && (
                     <>
                       <form action={operate} className="form">
-                        <input type="hidden" name="task" value="payment" />
-                        <input type="hidden" name="target" value={c.id} />
+                        <LocalizedInput
+                          type="hidden"
+                          name="task"
+                          value="payment"
+                        />
+                        <LocalizedInput
+                          type="hidden"
+                          name="target"
+                          value={c.id}
+                        />
                         <label>
-                          Montant reçu en MAD
-                          <input
+                          <I18nText text="Montant reçu en MAD" />
+                          <LocalizedInput
                             name="amount"
                             type="number"
                             min="0.01"
@@ -169,24 +201,36 @@ export default async function Page({
                           />
                         </label>
                         <label>
-                          Date de réception
-                          <input type="date" name="date" required />
+                          <I18nText text="Date de réception" />
+                          <LocalizedInput type="date" name="date" required />
                         </label>
                         <label>
-                          Référence du règlement vérifié
-                          <input
+                          <I18nText text="Référence du règlement vérifié" />
+                          <LocalizedInput
                             name="reference"
                             minLength={3}
                             maxLength={160}
                             required
                           />
                         </label>
-                        <Submit>Enregistrer le règlement</Submit>
+                        <Submit>
+                          <I18nText text="Enregistrer le règlement" />
+                        </Submit>
                       </form>
                       <form action={operate} style={{ marginTop: 12 }}>
-                        <input type="hidden" name="task" value="remind" />
-                        <input type="hidden" name="target" value={c.id} />
-                        <Submit>Rappeler</Submit>
+                        <LocalizedInput
+                          type="hidden"
+                          name="task"
+                          value="remind"
+                        />
+                        <LocalizedInput
+                          type="hidden"
+                          name="target"
+                          value={c.id}
+                        />
+                        <Submit>
+                          <I18nText text="Rappeler" />
+                        </Submit>
                       </form>
                     </>
                   )}
@@ -201,11 +245,13 @@ export default async function Page({
             id="nouvelle-depense"
             style={{ marginTop: 24 }}
           >
-            <h2>Ajouter une dépense</h2>
+            <h2>
+              <I18nText text="Ajouter une dépense" />
+            </h2>
             <form action={operate} className="form">
-              <input type="hidden" name="task" value="expense" />
+              <LocalizedInput type="hidden" name="task" value="expense" />
               <label>
-                Résidence
+                <I18nText text="Résidence" />
                 <select name="target">
                   {managed.map((r) => (
                     <option key={r.id} value={r.id}>
@@ -215,12 +261,17 @@ export default async function Page({
                 </select>
               </label>
               <label>
-                Objet
-                <input name="title" minLength={3} maxLength={160} required />
+                <I18nText text="Objet" />
+                <LocalizedInput
+                  name="title"
+                  minLength={3}
+                  maxLength={160}
+                  required
+                />
               </label>
               <label>
-                Combien ? (MAD)
-                <input
+                <I18nText text="Combien ? (MAD)" />
+                <LocalizedInput
                   name="amount"
                   type="number"
                   step="0.01"
@@ -229,30 +280,39 @@ export default async function Page({
                 />
               </label>
               <label>
-                Date limite
-                <input name="date" type="date" required />
+                <I18nText text="Date limite" />
+                <LocalizedInput name="date" type="date" required />
               </label>
               <fieldset>
-                <legend>Pour qui ?</legend>
+                <legend>
+                  <I18nText text="Pour qui ?" />
+                </legend>
                 {data.units
                   .filter((u) => u.can_manage)
                   .map((u) => (
                     <label key={u.id} className="check-row">
-                      <input type="checkbox" name="units" value={u.id} />
+                      <LocalizedInput
+                        type="checkbox"
+                        name="units"
+                        value={u.id}
+                      />
                       {u.residence} · {u.label}
                     </label>
                   ))}
               </fieldset>
-              <Submit>Partager la dépense</Submit>
+              <Submit>
+                <I18nText text="Partager la dépense" />
+              </Submit>
             </form>
           </section>
         )}
         {view === "messages" && (
           <section className="card" id="messages" style={{ marginTop: 24 }}>
-            <h2>Vos échanges</h2>
+            <h2>
+              <I18nText text="Vos échanges" />
+            </h2>
             <p>
-              Chaque conversation concerne un seul lot et ses habitants
-              autorisés.
+              <I18nText text="Chaque conversation concerne un seul lot et ses habitants autorisés." />
             </p>
             <div className="actions">
               {data.units.map((u) => (
@@ -267,16 +327,23 @@ export default async function Page({
             </div>
             {selected ? (
               <>
-                <h3 style={{ marginTop: 24 }}>Lot {selected.label}</h3>
+                <h3 style={{ marginTop: 24 }}>
+                  <I18nText text="Lot" />
+                  {selected.label}
+                </h3>
                 <div className="chat-log">
                   {[...(messages.data ?? [])].reverse().map((m) => (
                     <article key={m.id} className="section-note">
                       <strong>
-                        {m.sender_kind === "syndic" ? "Syndic" : "Habitant"}
+                        <I18nText
+                          text={String(
+                            m.sender_kind === "syndic" ? "Syndic" : "Habitant",
+                          )}
+                        />
                       </strong>
                       <p style={{ whiteSpace: "pre-wrap" }}>{m.body}</p>
                       <small>
-                        {new Date(m.created_at).toLocaleString("fr-MA", {
+                        {new Date(m.created_at).toLocaleString(intlLocale, {
                           timeZone: "Africa/Casablanca",
                         })}
                       </small>
@@ -284,48 +351,63 @@ export default async function Page({
                   ))}
                 </div>
                 <form action={operate} className="form">
-                  <input type="hidden" name="task" value="chat" />
-                  <input type="hidden" name="target" value={selected.id} />
+                  <LocalizedInput type="hidden" name="task" value="chat" />
+                  <LocalizedInput
+                    type="hidden"
+                    name="target"
+                    value={selected.id}
+                  />
                   <label>
-                    Votre message
+                    <I18nText text="Votre message" />
                     <textarea name="body" rows={3} required maxLength={3000} />
                   </label>
-                  <Submit>Envoyer</Submit>
+                  <Submit>
+                    <I18nText text="Envoyer" />
+                  </Submit>
                 </form>
                 <p className="small"></p>
               </>
             ) : (
-              <p>Aucun lot associé.</p>
+              <p>
+                <I18nText text="Aucun lot associé." />
+              </p>
             )}
           </section>
         )}
         {view === "meetings" && (
           <section className="card" id="reunions" style={{ marginTop: 24 }}>
-            <h2>Réunions</h2>
+            <h2>
+              <I18nText text="Réunions" />
+            </h2>
             {meetings.data?.length ? (
               meetings.data.map((m) => (
                 <article key={m.id} className="section-note">
                   <strong>{m.title}</strong>
                   <p>
-                    {new Date(m.starts_at).toLocaleString("fr-MA", {
+                    {new Date(m.starts_at).toLocaleString(intlLocale, {
                       timeZone: "Africa/Casablanca",
-                    })}{" "}
-                    · Heure du Maroc
+                    })}
+                    <I18nText text={String(" ")} />
+                    <I18nText text="· Heure du Maroc" />
                   </p>
                   <p>{m.location}</p>
                   <p style={{ whiteSpace: "pre-wrap" }}>{m.agenda}</p>
                 </article>
               ))
             ) : (
-              <p>Aucune réunion programmée.</p>
+              <p>
+                <I18nText text="Aucune réunion programmée." />
+              </p>
             )}
             {managed.length > 0 && (
               <details>
-                <summary>Programmer une réunion</summary>
+                <summary>
+                  <I18nText text="Programmer une réunion" />
+                </summary>
                 <form action={operate} className="form">
-                  <input type="hidden" name="task" value="meeting" />
+                  <LocalizedInput type="hidden" name="task" value="meeting" />
                   <label>
-                    Résidence
+                    <I18nText text="Résidence" />
                     <select name="target">
                       {managed.map((r) => (
                         <option key={r.id} value={r.id}>
@@ -335,8 +417,8 @@ export default async function Page({
                     </select>
                   </label>
                   <label>
-                    Objet
-                    <input
+                    <I18nText text="Objet" />
+                    <LocalizedInput
                       name="title"
                       required
                       minLength={3}
@@ -344,15 +426,19 @@ export default async function Page({
                     />
                   </label>
                   <label>
-                    Date et heure au Maroc
-                    <input name="date" type="datetime-local" required />
+                    <I18nText text="Date et heure au Maroc" />
+                    <LocalizedInput
+                      name="date"
+                      type="datetime-local"
+                      required
+                    />
                     <span className="form-note">
-                      Le fuseau horaire du Maroc est appliqué automatiquement.
+                      <I18nText text="Le fuseau horaire du Maroc est appliqué automatiquement." />
                     </span>
                   </label>
                   <label>
-                    Lieu ou lien de réunion
-                    <input
+                    <I18nText text="Lieu ou lien de réunion" />
+                    <LocalizedInput
                       name="location"
                       required
                       minLength={3}
@@ -360,16 +446,17 @@ export default async function Page({
                     />
                   </label>
                   <label>
-                    Ordre du jour
+                    <I18nText text="Ordre du jour" />
                     <textarea name="body" maxLength={5000} />
                   </label>
-                  <Submit>Programmer</Submit>
+                  <Submit>
+                    <I18nText text="Programmer" />
+                  </Submit>
                 </form>
               </details>
             )}
             <p className="small">
-              Un rappel dans le site apparaît lors d’une visite dans les 24
-              heures précédant la réunion.
+              <I18nText text="Un rappel dans le site apparaît lors d’une visite dans les 24 heures précédant la réunion." />
             </p>
           </section>
         )}
@@ -379,38 +466,56 @@ export default async function Page({
             id="notifications"
             style={{ marginTop: 24 }}
           >
-            <h2>Notifications</h2>
+            <h2>
+              <I18nText text="Notifications" />
+            </h2>
             {inbox.data?.length ? (
               inbox.data.map((n) => (
                 <article className="list-row" key={n.id}>
                   <div>
-                    <strong>{n.title}</strong>
+                    <strong><SystemNotification text={n.title} /></strong>
                     <p className="small">
-                      {new Date(n.created_at).toLocaleString("fr-MA", {
+                      {new Date(n.created_at).toLocaleString(intlLocale, {
                         timeZone: "Africa/Casablanca",
                       })}
                     </p>
                   </div>
                   {!n.read_at && (
                     <form action={operate}>
-                      <input type="hidden" name="task" value="read" />
-                      <input type="hidden" name="target" value={n.id} />
-                      <Submit>Marquer comme lu</Submit>
+                      <LocalizedInput type="hidden" name="task" value="read" />
+                      <LocalizedInput
+                        type="hidden"
+                        name="target"
+                        value={n.id}
+                      />
+                      <Submit>
+                        <I18nText text="Marquer comme lu" />
+                      </Submit>
                     </form>
                   )}
                 </article>
               ))
             ) : (
-              <p>Aucune notification.</p>
+              <p>
+                <I18nText text="Aucune notification." />
+              </p>
             )}
           </section>
         )}
         {view === "balances" && (
           <div className="quick-grid">
-            <Link href="/operations?view=expenses">Dépenses et soldes →</Link>
-            <Link href="/operations?view=messages">Écrire au syndic →</Link>
-            <Link href="/incidents">Signaler un problème →</Link>
-            <Link href="/operations/export">Exporter mes comptes →</Link>
+            <Link href="/operations?view=expenses">
+              <I18nText text="Dépenses et soldes →" />
+            </Link>
+            <Link href="/operations?view=messages">
+              <I18nText text="Écrire au syndic →" />
+            </Link>
+            <Link href="/incidents">
+              <I18nText text="Signaler un problème →" />
+            </Link>
+            <Link href="/operations/export">
+              <I18nText text="Exporter mes comptes →" />
+            </Link>
           </div>
         )}
       </main>

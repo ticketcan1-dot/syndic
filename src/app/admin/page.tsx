@@ -1,3 +1,6 @@
+import { intlLocale as getIntlLocale } from "@/lib/locale-server";
+import { LocalizedInput } from "@/components/i18n-input";
+import { I18nText } from "@/components/i18n";
 import { platformAdmin } from "@/lib/access";
 import { Submit } from "@/components/submit";
 import { Notice } from "@/components/notice";
@@ -16,6 +19,8 @@ export default async function Page({
 }: {
   searchParams: Promise<{ message?: string }>;
 }) {
+  const intlLocale = await getIntlLocale();
+
   const { db } = await platformAdmin();
   const [orgs, subs, history] = await Promise.all([
     db.rpc("syndic_admin_organizations"),
@@ -35,11 +40,19 @@ export default async function Page({
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">Gestion de la plateforme</span>
-          <h1>Administration</h1>
-          <p>Organisations clientes et suivi des abonnements.</p>
+          <span className="eyebrow">
+            <I18nText text="Gestion de la plateforme" />
+          </span>
+          <h1>
+            <I18nText text="Administration" />
+          </h1>
+          <p>
+            <I18nText text="Organisations clientes et suivi des abonnements." />
+          </p>
         </div>
-        <span className="badge">Accès réservé</span>
+        <span className="badge">
+          <I18nText text="Accès réservé" />
+        </span>
       </div>
       <Notice
         message={(await searchParams).message}
@@ -47,11 +60,15 @@ export default async function Page({
       />
       <div className="stats">
         <div className="card">
-          <p>Organisations</p>
+          <p>
+            <I18nText text="Organisations" />
+          </p>
           <div className="stat-number">{organizations.length}</div>
         </div>
         <div className="card">
-          <p>Abonnements actifs</p>
+          <p>
+            <I18nText text="Abonnements actifs" />
+          </p>
           <div className="stat-number">
             {subs.data?.filter(
               (s) => s.status === "active" && new Date(s.ends_at) > new Date(),
@@ -59,7 +76,9 @@ export default async function Page({
           </div>
         </div>
         <div className="card">
-          <p>À configurer</p>
+          <p>
+            <I18nText text="À configurer" />
+          </p>
           <div className="stat-number">
             {
               organizations.filter(
@@ -70,27 +89,34 @@ export default async function Page({
         </div>
       </div>
       <section className="card">
-        <h2>Créer un compte syndic</h2>
+        <h2>
+          <I18nText text="Créer un compte syndic" />
+        </h2>
         {!process.env.SUPABASE_SECRET_KEY && (
           <div role="alert" className="notice">
-            La création des comptes nécessite la variable serveur
-            SUPABASE_SECRET_KEY dans Vercel, puis un redéploiement. Les comptes
-            existants continuent de fonctionner.
+            <I18nText text="La création des comptes nécessite la variable serveur SUPABASE_SECRET_KEY dans Vercel, puis un redéploiement. Les comptes existants continuent de fonctionner." />
           </div>
         )}
-        <p>Le compte est activé immédiatement sans e-mail de confirmation.</p>
+        <p>
+          <I18nText text="Le compte est activé immédiatement sans e-mail de confirmation." />
+        </p>
         <form action={provisionSyndic} className="form">
           <label>
-            Organisation
-            <input name="organization" required minLength={2} maxLength={120} />
+            <I18nText text="Organisation" />
+            <LocalizedInput
+              name="organization"
+              required
+              minLength={2}
+              maxLength={120}
+            />
           </label>
           <label>
-            E-mail de connexion
-            <input name="email" type="email" required />
+            <I18nText text="E-mail de connexion" />
+            <LocalizedInput name="email" type="email" required />
           </label>
           <label>
-            Mot de passe initial
-            <input
+            <I18nText text="Mot de passe initial" />
+            <LocalizedInput
               name="password"
               type="password"
               autoComplete="new-password"
@@ -99,17 +125,22 @@ export default async function Page({
               maxLength={128}
             />
           </label>
-          <Submit>Créer le compte syndic</Submit>
+          <Submit>
+            <I18nText text="Créer le compte syndic" />
+          </Submit>
         </form>
       </section>
       <section className="card" style={{ marginTop: 24 }}>
-        <h2>Abonnements des syndics</h2>
+        <h2>
+          <I18nText text="Abonnements des syndics" />
+        </h2>
         <p>
-          Suivi manuel. Chaque modification exige un motif et conserve un
-          historique. Aucun encaissement automatique n’est effectué.
+          <I18nText text="Suivi manuel. Chaque modification exige un motif et conserve un historique. Aucun encaissement automatique n’est effectué." />
         </p>
         {organizations.length === 0 && (
-          <p className="empty">Aucune organisation cliente pour le moment.</p>
+          <p className="empty">
+            <I18nText text="Aucune organisation cliente pour le moment." />
+          </p>
         )}
         <div className="list">
           {organizations.map((o) => {
@@ -117,44 +148,54 @@ export default async function Page({
             return (
               <details key={o.id}>
                 <summary>
-                  {o.name} —{" "}
-                  {sub
+                  {o.name} —<I18nText text={String(" ")} />
+                  <I18nText text={sub
                     ? new Date(sub.ends_at) <= new Date() &&
                       ["active", "trialing"].includes(sub.status)
                       ? "Expiré"
                       : statuses[sub.status]
-                    : "Non configuré"}
+                    : "Non configuré"} />
                 </summary>
                 <form
                   action={setSubscription}
                   className="form"
                   style={{ marginTop: 18 }}
                 >
-                  <input type="hidden" name="organization_id" value={o.id} />
+                  <LocalizedInput
+                    type="hidden"
+                    name="organization_id"
+                    value={o.id}
+                  />
                   <label>
-                    Offre
+                    <I18nText text="Offre" />
                     <select name="plan" defaultValue={sub?.plan ?? "essentiel"}>
-                      <option value="essentiel">Essentiel</option>
-                      <option value="pro">Pro</option>
-                      <option value="business">Business</option>
+                      <option value="essentiel">
+                        <I18nText text="Essentiel" />
+                      </option>
+                      <option value="pro">
+                        <I18nText text="Pro" />
+                      </option>
+                      <option value="business">
+                        <I18nText text="Business" />
+                      </option>
                     </select>
                   </label>
                   <label>
-                    Statut
+                    <I18nText text="Statut" />
                     <select
                       name="status"
                       defaultValue={sub?.status ?? "trialing"}
                     >
                       {Object.entries(statuses).map(([value, label]) => (
                         <option key={value} value={value}>
-                          {label}
+                          <I18nText text={String(label)} />
                         </option>
                       ))}
                     </select>
                   </label>
                   <label>
-                    Fin de période (fin de journée UTC)
-                    <input
+                    <I18nText text="Fin de période (fin de journée UTC)" />
+                    <LocalizedInput
                       type="date"
                       name="end_date"
                       defaultValue={sub?.ends_at?.slice(0, 10)}
@@ -162,8 +203,8 @@ export default async function Page({
                     />
                   </label>
                   <label>
-                    Motif / référence de validation
-                    <input
+                    <I18nText text="Motif / référence de validation" />
+                    <LocalizedInput
                       name="reason"
                       required
                       minLength={5}
@@ -171,7 +212,9 @@ export default async function Page({
                       placeholder="Référence de règlement vérifié ou décision commerciale"
                     />
                   </label>
-                  <Submit>Enregistrer l’abonnement</Submit>
+                  <Submit>
+                    <I18nText text="Enregistrer l’abonnement" />
+                  </Submit>
                 </form>
               </details>
             );
@@ -179,7 +222,9 @@ export default async function Page({
         </div>
       </section>
       <section className="card" style={{ marginTop: 24 }}>
-        <h2>Dernières modifications</h2>
+        <h2>
+          <I18nText text="Dernières modifications" />
+        </h2>
         {history.data?.length ? (
           history.data.map((h) => (
             <div key={h.id} className="list-row">
@@ -189,21 +234,23 @@ export default async function Page({
                     ?.name ?? "Organisation"}
                 </strong>
                 <p>
-                  {statuses[h.new_value.status]} · {h.new_value.note}
+                  <I18nText text={String(statuses[h.new_value.status])} /> ·{" "}
+                  {h.new_value.note}
                 </p>
               </div>
               <span className="small">
-                {new Date(h.created_at).toLocaleDateString("fr-MA")}
+                {new Date(h.created_at).toLocaleDateString(intlLocale)}
               </span>
             </div>
           ))
         ) : (
-          <p>Aucune modification enregistrée.</p>
+          <p>
+            <I18nText text="Aucune modification enregistrée." />
+          </p>
         )}
       </section>
       <p className="small" style={{ marginTop: 20 }}>
-        Les statuts sont un suivi commercial. Le blocage automatique des
-        opérations et les paiements en ligne ne sont pas activés.
+        <I18nText text="Les statuts sont un suivi commercial. Le blocage automatique des opérations et les paiements en ligne ne sont pas activés." />
       </p>
     </>
   );

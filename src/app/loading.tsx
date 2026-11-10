@@ -1,7 +1,8 @@
+import { I18nText } from "@/components/i18n";
 export default function Loading() {
   return (
     <div className="content" role="status">
-      Chargement de votre espace…
+      <I18nText text="Chargement de votre espace…" />
     </div>
   );
 }

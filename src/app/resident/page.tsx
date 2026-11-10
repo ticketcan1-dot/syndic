@@ -1,3 +1,6 @@
+import { intlLocale as getIntlLocale } from "@/lib/locale-server";
+import { LocalizedInput } from "@/components/i18n-input";
+import { I18nText } from "@/components/i18n";
 import Link from "next/link";
 import { signedIn } from "@/lib/access";
 import { Brand } from "@/components/brand";
@@ -27,6 +30,8 @@ export default async function Page({
 }: {
   searchParams: Promise<{ message?: string }>;
 }) {
+  const intlLocale = await getIntlLocale();
+
   const { db, user } = await signedIn();
   const [space, invitations] = await Promise.all([
     db.rpc("syndic_my_resident_space"),
@@ -44,17 +49,23 @@ export default async function Page({
       <header className="public-nav">
         <Brand />
         <form action={signOut}>
-          <button className="text-link">Déconnexion</button>
+          <button className="text-link">
+            <I18nText text="Déconnexion" />
+          </button>
         </form>
       </header>
       <main className="section">
-        <span className="eyebrow">Mon espace résident</span>
-        <h1>Chez vous.</h1>
+        <span className="eyebrow">
+          <I18nText text="Mon espace résident" />
+        </span>
+        <h1>
+          <I18nText text="Chez vous." />
+        </h1>
         <Link href="/incidents" className="button outline">
-          Signaler un incident
+          <I18nText text="Signaler un incident" />
         </Link>
         <Link href="/operations" className="button primary">
-          Mes cotisations, messages et réunions
+          <I18nText text="Mes cotisations, messages et réunions" />
         </Link>
         <p>{user.email}</p>
         <Notice
@@ -63,11 +74,15 @@ export default async function Page({
         />
         {invitations.data?.map((i) => (
           <section key={i.id} className="card" style={{ marginBottom: 20 }}>
-            <h2>Une invitation vous attend</h2>
+            <h2>
+              <I18nText text="Une invitation vous attend" />
+            </h2>
             <p></p>
             <form action={acceptInvitation}>
-              <input type="hidden" name="id" value={i.id} />
-              <Submit>Accepter l’invitation</Submit>
+              <LocalizedInput type="hidden" name="id" value={i.id} />
+              <Submit>
+                <I18nText text="Accepter l’invitation" />
+              </Submit>
             </form>
           </section>
         ))}
@@ -76,37 +91,45 @@ export default async function Page({
             <section className="card" key={u.id}>
               <span className="badge">{u.city}</span>
               <h2 style={{ marginTop: 12 }}>{u.residence}</h2>
-              <p>Lot {u.label}</p>
+              <p>
+                <I18nText text="Lot" />
+                {u.label}
+              </p>
             </section>
           ))}
         </div>
         {!data.units.length && (
           <section className="card">
-            <h2>En attente de votre syndic</h2>
+            <h2>
+              <I18nText text="En attente de votre syndic" />
+            </h2>
             <p>
-              Demandez une invitation à l’adresse de votre compte. Aucun lot
-              n’est encore associé à votre compte.
+              <I18nText text="Demandez une invitation à l’adresse de votre compte. Aucun lot n’est encore associé à votre compte." />
             </p>
           </section>
         )}
         <section style={{ marginTop: 32 }}>
-          <h2>Activités et annonces</h2>
+          <h2>
+            <I18nText text="Activités et annonces" />
+          </h2>
           {data.posts.length ? (
             data.posts.map((p) => (
               <article className="card" key={p.id} style={{ marginBottom: 16 }}>
                 <span className="small">
-                  {new Date(p.created_at).toLocaleDateString("fr-MA")}
+                  {new Date(p.created_at).toLocaleDateString(intlLocale)}
                 </span>
                 <h3>{p.title}</h3>
                 <p style={{ whiteSpace: "pre-wrap" }}>{p.body}</p>
               </article>
             ))
           ) : (
-            <p>Aucune activité publiée pour le moment.</p>
+            <p>
+              <I18nText text="Aucune activité publiée pour le moment." />
+            </p>
           )}
         </section>
         <Link href="/app" className="text-link small">
-          Accéder à mon espace syndic
+          <I18nText text="Accéder à mon espace syndic" />
         </Link>
       </main>
     </div>
