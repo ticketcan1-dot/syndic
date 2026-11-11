@@ -29,6 +29,7 @@ beforeAll(async () => {
     "202611080002_join_links.sql",
     "202611110001_signup_billing.sql",
     "202611110002_subscription_enforcement.sql",
+    "202611120001_admin_overview.sql",
   ])
     await db.exec(readFileSync("supabase/migrations/" + f, "utf8"));
   await db.query("insert into public.syndic_platform_admins values($1)", [admin]);
@@ -162,4 +163,14 @@ it("an expired subscription automatically restricts the syndic and its residents
   expect(await one<boolean>("select public.syndic_can_access_unit($1) r", [unitB])).toBe(true);
   await as(syndic);
   expect(await one<boolean>("select public.syndic_manages_residence($1) r", [residence])).toBe(true);
+});
+it("only the platform admin gets the structured overview", async () => {
+  await as(syndic);
+  await expect(db.query("select public.syndic_admin_overview()")).rejects.toThrow();
+  await as(admin);
+  const o = await one<{ syndics: { name: string; residences: number }[]; residences: unknown[]; residents: { email: string }[] }>("select public.syndic_admin_overview() r");
+  expect(o.syndics[0].name).toBe("Atlas Gestion");
+  expect(o.syndics[0].residences).toBe(2);
+  expect(o.residences).toHaveLength(2);
+  expect(o.residents.some((r) => r.email === "resident@example.com")).toBe(true);
 });

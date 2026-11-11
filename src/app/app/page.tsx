@@ -52,7 +52,7 @@ export default async function Page({
       <div className="split">
         <section className="card">
           <h2>
-            <I18nText text="Vos résidences" />
+            <I18nText text="Mes immeubles" />
           </h2>
           <p>
             <I18nText text="Retrouvez les copropriétés de vos organisations." />
@@ -66,8 +66,8 @@ export default async function Page({
                     {r.city} · {r.address}
                   </p>
                 </div>
-                <Link className="text-link small" href="/app/lots">
-                  <I18nText text="Voir les lots" />
+                <Link className="button primary" href={`/app/residences/${r.id}`}>
+                  <I18nText text="Gérer cet immeuble" />
                 </Link>
               </div>
             ))
@@ -86,7 +86,10 @@ export default async function Page({
           </p>
           <div className="list">
             <Link href="/app/residences" className="button outline">
-              <I18nText text="Ajouter une résidence" />
+              <I18nText text="Ajouter un immeuble" />
+            </Link>
+            <Link href="/abonnement" className="button outline">
+              <I18nText text="Mon abonnement" />
             </Link>
             <Link href="/app/communaute" className="button outline">
               <I18nText text="Gérer les habitants" />
@@ -105,7 +108,7 @@ export default async function Page({
           <I18nText text="Votre parcours de démarrage" />
         </strong>
         <p style={{ margin: "8px 0 0" }}>
-          <I18nText text="1. Recevoir votre accès → 2. Ajouter une résidence → 3. Enregistrer les lots" />
+          <I18nText text="1. Ajoutez un immeuble → 2. Ajoutez ses appartements → 3. Envoyez un lien d’invitation à chaque habitant → 4. Approuvez leurs demandes" />
         </p>
       </div>
     </>

@@ -257,12 +257,12 @@ end;$$;
 -- People overview for syndics (residents + pending requests) with contact details from Auth.
 create function public.syndic_manager_people() returns jsonb language sql stable security definer set search_path='' as $$
  select jsonb_build_object(
- 'residents',coalesce((select jsonb_agg(jsonb_build_object('unit_id',a.unit_id,'user_id',a.user_id,'unit',u.label,'residence',r.name,
+ 'residents',coalesce((select jsonb_agg(jsonb_build_object('unit_id',a.unit_id,'user_id',a.user_id,'residence_id',r.id,'unit',u.label,'residence',r.name,
    'email',au.email,'name',trim(coalesce(au.raw_user_meta_data->>'first_name','')||' '||coalesce(au.raw_user_meta_data->>'last_name','')),
    'phone',coalesce(au.raw_user_meta_data->>'phone',''),'blocked',a.blocked_at is not null,'revoked',a.revoked_at is not null,'since',a.created_at) order by r.name,u.label)
   from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id join public.syndic_residences r on r.id=u.residence_id join auth.users au on au.id=a.user_id
   where public.syndic_manages_residence(r.id)),'[]'::jsonb),
- 'requests',coalesce((select jsonb_agg(jsonb_build_object('id',q.id,'unit',u.label,'residence',r.name,'email',au.email,
+ 'requests',coalesce((select jsonb_agg(jsonb_build_object('id',q.id,'unit_id',q.unit_id,'residence_id',r.id,'unit',u.label,'residence',r.name,'email',au.email,
    'name',trim(coalesce(au.raw_user_meta_data->>'first_name','')||' '||coalesce(au.raw_user_meta_data->>'last_name','')),
    'phone',coalesce(au.raw_user_meta_data->>'phone',''),'created_at',q.created_at) order by q.created_at)
   from public.syndic_join_requests q join public.syndic_units u on u.id=q.unit_id join public.syndic_residences r on r.id=u.residence_id join auth.users au on au.id=q.user_id

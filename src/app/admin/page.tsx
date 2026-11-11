@@ -8,6 +8,11 @@ import { setSubscription, decideAccount, reviewPayment, saveBilling } from "./ac
 import { provisionClient } from "@/lib/provision";
 import { planLabels } from "@/lib/plans";
 import { provisionSyndic } from "./provision";
+type Overview = {
+  syndics: { id: string; name: string; email: string | null; owner: string; phone: string; plan: string | null; status: string | null; ends_at: string | null; active: boolean; residences: number; units: number; residents: number }[];
+  residences: { id: string; name: string; city: string; address: string; syndic: string; units: number; residents: number }[];
+  residents: { email: string; name: string; phone: string; unit: string; residence: string; syndic: string; state: string }[];
+};
 const statuses: Record<string, string> = {
   trialing: "Essai",
   active: "Actif",
@@ -19,8 +24,9 @@ const statuses: Record<string, string> = {
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ message?: string }>;
+  searchParams: Promise<{ message?: string; tab?: string }>;
 }) {
+  const tab = (await searchParams).tab ?? "apercu";
   const intlLocale = await getIntlLocale();
 
   const { db } = await platformAdmin();
@@ -44,6 +50,8 @@ export default async function Page({
       .order("created_at"),
     db.from("syndic_billing_settings").select("*").maybeSingle(),
   ]);
+  const { data: overviewData } = await db.rpc("syndic_admin_overview");
+  const overview = (overviewData ?? { syndics: [], residences: [], residents: [] }) as Overview;
   const proofs: Record<string, string> = {};
   if (payments.data?.length) {
     try {
@@ -85,6 +93,109 @@ export default async function Page({
         message={(await searchParams).message}
         error={Boolean(orgs.error || subs.error || history.error)}
       />
+      <nav className="admin-tabs" aria-label="Administration">
+        {(
+          [
+            ["apercu", "Vue d’ensemble", 0],
+            ["syndics", "Syndics (clients)", 0],
+            ["immeubles", "Immeubles", 0],
+            ["habitants", "Habitants", 0],
+            ["paiements", "Demandes de paiement", payments.data?.length ?? 0],
+            ["comptes", "Comptes en attente", requests.data?.length ?? 0],
+            ["abonnements", "Abonnements", 0],
+            ["reglages", "RIB et réglages", 0],
+          ] as const
+        ).map(([key, label, count]) => (
+          <a key={key} href={`/admin?tab=${key}`} className={tab === key ? "selected" : ""}>
+            <I18nText text={label} />
+            {count > 0 && <span className="count">{count}</span>}
+          </a>
+        ))}
+      </nav>
+      {tab === "apercu" && (
+        <div className="stats">
+          <div className="card"><p><I18nText text="Immeubles" /></p><div className="stat-number">{overview.residences.length}</div></div>
+          <div className="card"><p><I18nText text="Habitants" /></p><div className="stat-number">{overview.residents.filter((r) => r.state === "active").length}</div></div>
+          <div className="card"><p><I18nText text="Paiements à vérifier" /></p><div className="stat-number">{payments.data?.length ?? 0}</div></div>
+          <div className="card"><p><I18nText text="Comptes en attente" /></p><div className="stat-number">{requests.data?.length ?? 0}</div></div>
+        </div>
+      )}
+      {tab === "syndics" && (
+        <section className="card" style={{ marginBottom: 24 }}>
+          <h2><I18nText text="Syndics clients" /></h2>
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th><I18nText text="Syndic" /></th>
+                  <th><I18nText text="Contact" /></th>
+                  <th><I18nText text="Plan" /></th>
+                  <th><I18nText text="Fin de l’abonnement" /></th>
+                  <th><I18nText text="Immeubles" /></th>
+                  <th><I18nText text="Appartements" /></th>
+                  <th><I18nText text="Habitants" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {overview.syndics.map((o) => (
+                  <tr key={o.id}>
+                    <td><strong>{o.name}</strong></td>
+                    <td>{o.owner}<br /><span className="small">{o.email} {o.phone}</span></td>
+                    <td>
+                      {o.plan ? <I18nText text={planLabels[o.plan] ?? o.plan} /> : "—"}
+                      <br />
+                      <span className={"status-pill " + (o.active ? "ok" : "danger")}><I18nText text={o.active ? "Actif" : "Expiré"} /></span>
+                    </td>
+                    <td>{o.ends_at ? new Date(o.ends_at).toLocaleDateString(intlLocale) : "—"}</td>
+                    <td>{o.residences}</td>
+                    <td>{o.units}</td>
+                    <td>{o.residents}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {!overview.syndics.length && <p><I18nText text="Aucune organisation cliente pour le moment." /></p>}
+        </section>
+      )}
+      {tab === "immeubles" && (
+        <section className="card">
+          <h2><I18nText text="Tous les immeubles" /></h2>
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead><tr><th><I18nText text="Immeuble" /></th><th><I18nText text="Syndic" /></th><th><I18nText text="Ville" /></th><th><I18nText text="Appartements" /></th><th><I18nText text="Habitants" /></th></tr></thead>
+              <tbody>
+                {overview.residences.map((r) => (
+                  <tr key={r.id}><td><strong>{r.name}</strong><br /><span className="small">{r.address}</span></td><td>{r.syndic}</td><td>{r.city}</td><td>{r.units}</td><td>{r.residents}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {!overview.residences.length && <p><I18nText text="Aucun immeuble." /></p>}
+        </section>
+      )}
+      {tab === "habitants" && (
+        <section className="card">
+          <h2><I18nText text="Tous les habitants" /></h2>
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead><tr><th><I18nText text="Habitant" /></th><th><I18nText text="Contact" /></th><th><I18nText text="Immeuble" /></th><th><I18nText text="Syndic" /></th><th><I18nText text="Statut" /></th></tr></thead>
+              <tbody>
+                {overview.residents.map((r, i) => (
+                  <tr key={i}>
+                    <td><strong>{r.name || "—"}</strong></td>
+                    <td>{r.email}<br /><span className="small">{r.phone}</span></td>
+                    <td>{r.residence} · {r.unit}</td>
+                    <td>{r.syndic}</td>
+                    <td><span className={"status-pill " + (r.state === "active" ? "ok" : "danger")}><I18nText text={r.state === "active" ? "Actif" : r.state === "blocked" ? "Bloqué" : "Révoqué"} /></span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {!overview.residents.length && <p><I18nText text="Aucun habitant pour le moment." /></p>}
+        </section>
+      )}
       {(requests.data?.length || payments.data?.length) ? (
         <div role="alert" className="notice">
           🔔 <I18nText text="À traiter :" />
@@ -92,6 +203,7 @@ export default async function Page({
           {payments.data?.length ?? 0} <I18nText text="virement(s)" />
         </div>
       ) : null}
+      {tab === "comptes" && (<>
       <section className="card" style={{ marginBottom: 24 }}>
         <h2>
           <I18nText text="Comptes syndic en attente d’approbation" />
@@ -133,6 +245,8 @@ export default async function Page({
           </article>
         ))}
       </section>
+      </>)}
+      {tab === "paiements" && (<>
       <section className="card" style={{ marginBottom: 24 }}>
         <h2>
           <I18nText text="Virements à vérifier" />
@@ -193,6 +307,8 @@ export default async function Page({
           );
         })}
       </section>
+      </>)}
+      {tab === "apercu" && (<>
       <div className="stats">
         <div className="card">
           <p>
@@ -223,6 +339,8 @@ export default async function Page({
           </div>
         </div>
       </div>
+      </>)}
+      {tab === "syndics" && (<>
       <section className="card">
         <h2>
           <I18nText text="Créer un compte syndic" />
@@ -265,6 +383,8 @@ export default async function Page({
           </Submit>
         </form>
       </section>
+      </>)}
+      {tab === "abonnements" && (<>
       <section className="card" style={{ marginTop: 24 }}>
         <h2>
           <I18nText text="Abonnements des syndics" />
@@ -361,6 +481,8 @@ export default async function Page({
           })}
         </div>
       </section>
+      </>)}
+      {tab === "reglages" && (<>
       <section className="card" style={{ marginTop: 24 }}>
         <h2>
           <I18nText text="Coordonnées bancaires (RIB)" />
@@ -407,6 +529,8 @@ export default async function Page({
           </Submit>
         </form>
       </section>
+      </>)}
+      {tab === "abonnements" && (<>
       <section className="card" style={{ marginTop: 24 }}>
         <h2>
           <I18nText text="Dernières modifications" />
@@ -435,6 +559,7 @@ export default async function Page({
           </p>
         )}
       </section>
+      </>)}
       <p className="small" style={{ marginTop: 20 }}>
         <I18nText text="Les paiements se font par virement bancaire : chaque capture est vérifiée manuellement avant prolongation." />
       </p>

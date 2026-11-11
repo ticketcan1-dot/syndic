@@ -30,11 +30,23 @@ export default async function Layout({
             <I18nText text="Administration plateforme" />
             {pending > 0 && <span className="badge">🔔 {pending}</span>}
           </Link>
-          <Link href="/app">
-            <I18nText text="Espace syndic" />
+          <Link href="/admin?tab=syndics">
+            <I18nText text="Syndics (clients)" />
           </Link>
-          <Link href="/resident">
-            <I18nText text="Espace résident" />
+          <Link href="/admin?tab=immeubles">
+            <I18nText text="Immeubles" />
+          </Link>
+          <Link href="/admin?tab=habitants">
+            <I18nText text="Habitants" />
+          </Link>
+          <Link href="/admin?tab=paiements">
+            <I18nText text="Demandes de paiement" />
+          </Link>
+          <Link href="/admin?tab=comptes">
+            <I18nText text="Comptes en attente" />
+          </Link>
+          <Link href="/admin?tab=reglages">
+            <I18nText text="RIB et réglages" />
           </Link>
         </nav>
       </aside>

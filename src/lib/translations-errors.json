@@ -478,5 +478,37 @@
   "Votre abonnement est terminé : l’accès à votre espace et à celui de vos habitants est suspendu jusqu’à la validation de votre paiement.": {
     "ar": "انتهى اشتراكك: تم إيقاف الوصول إلى فضائك وفضاء سكانك إلى حين تأكيد الدفع.",
     "en": "Your subscription has ended: access to your space and your residents' space is suspended until your payment is validated."
+  },
+  "Identifiants administrateur incorrects.": {
+    "ar": "بيانات دخول المسؤول غير صحيحة.",
+    "en": "Incorrect administrator credentials."
+  },
+  "Ce compte n’a pas d’accès administrateur.": {
+    "ar": "هذا الحساب لا يملك صلاحية المسؤول.",
+    "en": "This account has no administrator access."
+  },
+  "Appartement ajouté.": {
+    "ar": "تمت إضافة الشقة.",
+    "en": "Apartment added."
+  },
+  "Indiquez le numéro de l’appartement.": {
+    "ar": "أدخل رقم الشقة.",
+    "en": "Enter the apartment number."
+  },
+  "Lien d’invitation créé : copiez-le et envoyez-le à l’habitant.": {
+    "ar": "تم إنشاء رابط الدعوة: انسخه وأرسله إلى الساكن.",
+    "en": "Invitation link created: copy it and send it to the resident."
+  },
+  "Dépense ajoutée et répartie entre les appartements.": {
+    "ar": "تمت إضافة المصروف وتوزيعه على الشقق.",
+    "en": "Expense added and split between apartments."
+  },
+  "Dépense refusée. Vérifiez vos droits et votre abonnement.": {
+    "ar": "تم رفض المصروف. تحقق من صلاحياتك واشتراكك.",
+    "en": "Expense refused. Check your rights and subscription."
+  },
+  "Vérifiez le titre, le montant, la date et les appartements.": {
+    "ar": "تحقق من العنوان والمبلغ والتاريخ والشقق.",
+    "en": "Check the title, amount, date and apartments."
   }
 }

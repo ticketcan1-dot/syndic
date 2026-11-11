@@ -41,6 +41,8 @@ export default async function AppLayout({
     (status?.request === "pending" || status?.request === "rejected")
   )
     redirect("/en-attente");
+  // A normal account only sees the spaces it has been authorised to see.
+  if (isAdmin !== true && !status?.member) redirect("/resident");
   const sub = subs?.[0];
   if (orgId && isAdmin !== true && (!sub || daysLeft(sub.ends_at) <= 0 || !["active", "trialing"].includes(sub.status)))
     redirect("/abonnement?message=" + encodeURIComponent("Votre abonnement est terminé : l’accès à votre espace et à celui de vos habitants est suspendu jusqu’à la validation de votre paiement."));
@@ -56,7 +58,7 @@ export default async function AppLayout({
             <I18nText text="Vue d’ensemble" />
           </Link>
           <Link href="/app/residences">
-            <I18nText text="Résidences" />
+            <I18nText text="Immeubles" />
           </Link>
           <Link href="/app/lots">
             <I18nText text="Appartements" />

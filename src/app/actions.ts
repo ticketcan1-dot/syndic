@@ -272,3 +272,19 @@ export async function createUnit(form: FormData) {
   revalidatePath("/app");
   message("/app/lots", "Lot créé.");
 }
+export async function adminSignIn(form: FormData) {
+  const email = String(form.get("email") ?? "");
+  const password = String(form.get("password") ?? "");
+  const fail = (text: string): never =>
+    redirect("/acces-admin?message=" + encodeURIComponent(text));
+  if (!email || !password) fail("Renseignez votre e-mail et votre mot de passe.");
+  const db = await supabase();
+  const { error } = await db.auth.signInWithPassword({ email, password });
+  if (error) fail("Identifiants administrateur incorrects.");
+  const { data: isAdmin } = await db.rpc("syndic_is_platform_admin");
+  if (isAdmin !== true) {
+    await db.auth.signOut();
+    fail("Ce compte n’a pas d’accès administrateur.");
+  }
+  redirect("/admin");
+}

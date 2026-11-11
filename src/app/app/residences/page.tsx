@@ -16,7 +16,7 @@ export default async function Page({
       <div className="page-heading">
         <div>
           <h1>
-            <I18nText text="Résidences" />
+            <I18nText text="Mes immeubles" />
           </h1>
           <p>
             <I18nText text="Un carnet d’adresses pour vos copropriétés." />
@@ -37,11 +37,17 @@ export default async function Page({
                   <p>{r.address}</p>
                   <span className="badge">{r.city}</span>
                 </div>
-                <span className="small">
-                  {data.units.filter((u) => u.residence_id === r.id).length}
-                  <I18nText text={String(" ")} />
-                  <I18nText text="lots" />
-                </span>
+                <div style={{ textAlign: "end" }}>
+                  <span className="small">
+                    {data.units.filter((u) => u.residence_id === r.id).length}
+                    <I18nText text={String(" ")} />
+                    <I18nText text="lots" />
+                  </span>
+                  <br />
+                  <Link className="button primary" href={`/app/residences/${r.id}`}>
+                    <I18nText text="Gérer cet immeuble" />
+                  </Link>
+                </div>
               </article>
             ))
           ) : (
@@ -52,7 +58,7 @@ export default async function Page({
         </section>
         <section className="card">
           <h2>
-            <I18nText text="Ajouter une résidence" />
+            <I18nText text="Ajouter un immeuble" />
           </h2>
           {data.organizations.length ? (
             <form className="form" action={createResidence}>

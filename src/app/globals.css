@@ -1446,3 +1446,58 @@ details p {
     grid-template-columns: 1fr;
   }
 }
+.admin-auth {
+  background: linear-gradient(160deg, #0f172a, #123e34);
+}
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 22px;
+}
+.admin-tabs a {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+.admin-tabs a.selected {
+  background: #123e34;
+  color: #fff;
+  border-color: #123e34;
+}
+.admin-tabs .count {
+  margin-inline-start: 6px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 999px;
+  padding: 0 7px;
+  font-size: 12px;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.data-table th,
+.data-table td {
+  text-align: start;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.data-table th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+.residence-tabs a.selected {
+  font-weight: 700;
+  text-decoration: underline;
+}
