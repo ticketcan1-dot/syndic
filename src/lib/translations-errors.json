@@ -474,5 +474,9 @@
   "Votre compte syndic est approuvé : essai gratuit d'un mois": {
     "ar": "تمت الموافقة على حساب السانديك: تجربة مجانية لمدة شهر",
     "en": "Your syndic account is approved: one-month free trial"
+  },
+  "Votre abonnement est terminé : l’accès à votre espace et à celui de vos habitants est suspendu jusqu’à la validation de votre paiement.": {
+    "ar": "انتهى اشتراكك: تم إيقاف الوصول إلى فضائك وفضاء سكانك إلى حين تأكيد الدفع.",
+    "en": "Your subscription has ended: access to your space and your residents' space is suspended until your payment is validated."
   }
 }

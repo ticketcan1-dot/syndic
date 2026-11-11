@@ -1,4 +1,5 @@
 import { intlLocale as getIntlLocale } from "@/lib/locale-server";
+import { SuspendedNotice } from "@/components/suspended-notice";
 import { LocalizedInput } from "@/components/i18n-input";
 import { I18nText, SystemNotification } from "@/components/i18n";
 import Link from "next/link";
@@ -109,6 +110,7 @@ export default async function Page({
             </Link>
           )}
         </div>
+        <SuspendedNotice />
         <Notice
           message={query.message}
           error={[

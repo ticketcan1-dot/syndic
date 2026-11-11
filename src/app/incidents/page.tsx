@@ -1,4 +1,5 @@
 import { intlLocale as getIntlLocale } from "@/lib/locale-server";
+import { SuspendedNotice } from "@/components/suspended-notice";
 import { LocalizedInput } from "@/components/i18n-input";
 import { I18nText } from "@/components/i18n";
 import Link from "next/link";
@@ -54,6 +55,7 @@ export default async function Page({
         <p>
           <I18nText text="Signalez un problème et suivez sa prise en charge." />
         </p>
+        <SuspendedNotice />
         <Notice
           message={(await searchParams).message}
           error={Boolean(context.error || incidents.error)}

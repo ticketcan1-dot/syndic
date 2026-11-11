@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { signedIn } from "@/lib/access";
 import { provisionClient } from "@/lib/provision";
 import { STANDARD_MONTHLY_CENTS } from "@/lib/plans";
-const PATH = "/app/abonnement";
+const PATH = "/abonnement";
 const BUCKET = "syndic-payment-proofs";
 const types: Record<string, string> = {
   "image/png": "png",

@@ -126,7 +126,14 @@ export default async function Page({
             <I18nText text="Aucun habitant pour le moment." />
           </p>
         )}
-        {people.residents.map((r) => (
+        {[...new Set(people.residents.map((r) => r.residence))].map(
+          (building) => (
+            <div key={building} style={{ marginTop: 16 }}>
+              <h3>
+                <I18nText text="Immeuble" /> {building} (
+                {people.residents.filter((r) => r.residence === building).length})
+              </h3>
+        {people.residents.filter((r) => r.residence === building).map((r) => (
           <article key={r.unit_id + r.user_id} className="list-row">
             <div>
               <strong>{r.name || r.email}</strong>
@@ -175,6 +182,9 @@ export default async function Page({
             </div>
           </article>
         ))}
+            </div>
+          ),
+        )}
       </section>
       <section className="card" style={{ marginBottom: 24 }}>
         <h2>

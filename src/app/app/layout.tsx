@@ -42,6 +42,8 @@ export default async function AppLayout({
   )
     redirect("/en-attente");
   const sub = subs?.[0];
+  if (orgId && isAdmin !== true && (!sub || daysLeft(sub.ends_at) <= 0 || !["active", "trialing"].includes(sub.status)))
+    redirect("/abonnement?message=" + encodeURIComponent("Votre abonnement est terminé : l’accès à votre espace et à celui de vos habitants est suspendu jusqu’à la validation de votre paiement."));
   const remaining = sub ? daysLeft(sub.ends_at) : null;
   const expired =
     sub &&
@@ -62,7 +64,7 @@ export default async function AppLayout({
           <Link href="/app/communaute">
             <I18nText text="Habitants" />
           </Link>
-          <Link href="/app/abonnement">
+          <Link href="/abonnement">
             <I18nText text="Abonnement" />
           </Link>
           {isAdmin === true && (
@@ -93,7 +95,7 @@ export default async function AppLayout({
                 </>
               )}
               {" · "}
-              <Link href="/app/abonnement" className="text-link">
+              <Link href="/abonnement" className="text-link">
                 <I18nText text="Gérer mon abonnement" />
               </Link>
             </div>

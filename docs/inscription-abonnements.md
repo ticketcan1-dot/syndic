@@ -16,7 +16,7 @@ Accès réservé aux comptes présents dans `syndic_platform_admins`. Un bandeau
 
 ## Espace syndic
 
-- `/app/abonnement` : plan actuel, jours restants, date de fin, RIB, envoi d’un paiement (plan Standard 30 DH/mois ou Entreprise sur devis, durée, référence, capture PNG/JPG/WEBP/PDF ≤ 5 Mo), historique. Changer de plan = envoyer un paiement pour le nouveau plan.
+- `/abonnement` : plan actuel, jours restants, date de fin, RIB, envoi d’un paiement (plan Standard 30 DH/mois ou Entreprise sur devis, durée, référence, capture PNG/JPG/WEBP/PDF ≤ 5 Mo), historique. Changer de plan = envoyer un paiement pour le nouveau plan.
 - Bandeau « jours restants / expiré » sur toutes les pages `/app`.
 - `/app/communaute` : demandes d’adhésion (Approuver / Refuser) et liste des utilisateurs de l’espace (Bloquer / Débloquer / Supprimer).
 
@@ -26,4 +26,13 @@ Sans compte : création du compte puis demande envoyée. Avec un compte : « Se 
 
 ## Limites
 
-Les comptes créés par `/inscription` sont confirmés sans e-mail (même principe que les liens d’invitation existants) : l’adresse n’est pas vérifiée. Les notifications sont internes au site (aucun e-mail/SMS). L’expiration de l’abonnement affiche un avertissement mais ne bloque pas les opérations.
+Les comptes créés par `/inscription` sont confirmés sans e-mail (même principe que les liens d’invitation existants) : l’adresse n’est pas vérifiée. Les notifications sont internes au site (aucun e-mail/SMS). 
+
+## Restriction automatique à l’expiration
+
+Migration `202611110002_subscription_enforcement.sql`. Quand l’abonnement d’un syndic (essai compris) est terminé, la base retire automatiquement :
+
+- au syndic : la gestion de ses immeubles (création de résidences/appartements, liens, approbations, annonces, cotisations…). Il est redirigé vers `/abonnement` où il peut toujours payer ;
+- aux habitants de ses immeubles : l’accès aux lots, annonces, cotisations, messages et réunions (message « Espace suspendu »).
+
+La validation du virement par l’administrateur rétablit l’accès immédiatement. Les comptes syndic créés par l’administrateur reçoivent aussi l’essai gratuit d’un mois.

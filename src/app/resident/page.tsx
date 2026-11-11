@@ -1,4 +1,5 @@
 import { intlLocale as getIntlLocale } from "@/lib/locale-server";
+import { SuspendedNotice } from "@/components/suspended-notice";
 import { LocalizedInput } from "@/components/i18n-input";
 import { I18nText } from "@/components/i18n";
 import Link from "next/link";
@@ -75,6 +76,7 @@ export default async function Page({
           <I18nText text="Mes cotisations, messages et réunions" />
         </Link>
         <p>{user.email}</p>
+        <SuspendedNotice />
         <Notice
           message={(await searchParams).message}
           error={Boolean(space.error || invitations.error)}

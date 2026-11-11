@@ -28,6 +28,7 @@ beforeAll(async () => {
     "202611080001_support_and_accounts.sql",
     "202611080002_join_links.sql",
     "202611110001_signup_billing.sql",
+    "202611110002_subscription_enforcement.sql",
   ])
     await db.exec(readFileSync("supabase/migrations/" + f, "utf8"));
   await db.query("insert into public.syndic_platform_admins values($1)", [admin]);
@@ -124,4 +125,41 @@ it("join links create requests the syndic approves, then can block and remove re
   await as(other);
   expect((await one<{ status: string }[]>("select public.syndic_my_join_requests() r"))[0].status).toBe("pending");
   await expect(db.query("select public.syndic_request_join_link($1,$2,$3)", [link2, attempt, other])).rejects.toThrow();
+});
+it("an expired subscription automatically restricts the syndic and its residents", async () => {
+  await as(syndic);
+  const residence = await one<string>("insert into public.syndic_residences(organization_id,name,address,city) values($1,'Immeuble B','Rue Fes','Rabat') returning id r", [org]);
+  const unitB = await one<string>("insert into public.syndic_units(residence_id,label,kind,share) values($1,'B1','apartment',1) returning id r", [residence]);
+  const link = await one<string>("select public.syndic_create_join_link($1) r", [unitB]);
+  await as(resident);
+  const req = await one<string>("select public.syndic_request_join($1) r", [link]);
+  await as(syndic);
+  await db.query("select public.syndic_decide_join_request($1,true)", [req]);
+  await db.query("select public.syndic_publish_post($1,'Info','Coupure eau demain')", [residence]);
+  await as(resident);
+  expect(await one<boolean>("select public.syndic_can_access_unit($1) r", [unitB])).toBe(true);
+  expect((await one<{ posts: unknown[] }>("select public.syndic_my_resident_space() r")).posts.length).toBeGreaterThan(0);
+  // Subscription ends.
+  await db.exec("reset role");
+  await db.query("update public.syndic_subscription_records set ends_at=now()-interval '1 day' where organization_id=$1", [org]);
+  await as(resident);
+  expect(await one<boolean>("select public.syndic_can_access_unit($1) r", [unitB])).toBe(false);
+  const space = await one<{ units: unknown[]; posts: unknown[] }>("select public.syndic_my_resident_space() r");
+  expect(space.units).toHaveLength(0);
+  expect(space.posts).toHaveLength(0);
+  expect((await db.query("select * from public.syndic_residence_posts")).rows).toHaveLength(0);
+  expect(await one<string[]>("select public.syndic_my_suspended_spaces() r")).toContain("Immeuble B");
+  await as(syndic);
+  expect(await one<boolean>("select public.syndic_manages_residence($1) r", [residence])).toBe(false);
+  await expect(db.query("select public.syndic_create_join_link($1)", [unitB])).rejects.toThrow();
+  await expect(db.query("insert into public.syndic_units(residence_id,label,kind,share) values($1,'B2','apartment',1)", [residence])).rejects.toThrow();
+  await expect(db.query("insert into public.syndic_residences(organization_id,name,address,city) values($1,'Immeuble C','Rue X','Rabat')", [org])).rejects.toThrow();
+  // The syndic can still pay; validation restores access for everyone.
+  const pay = await one<string>("select public.syndic_submit_subscription_payment($1,'standard',1,3000,'VIR3',$2) r", [org, org + "/c.png"]);
+  await as(admin);
+  await db.query("select public.syndic_admin_review_payment($1,true,'')", [pay]);
+  await as(resident);
+  expect(await one<boolean>("select public.syndic_can_access_unit($1) r", [unitB])).toBe(true);
+  await as(syndic);
+  expect(await one<boolean>("select public.syndic_manages_residence($1) r", [residence])).toBe(true);
 });

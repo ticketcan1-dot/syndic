@@ -743,5 +743,7 @@
   "Validé": { "ar": "مؤكد", "en": "Approved" },
   "Refusé": { "ar": "مرفوض", "en": "Rejected" },
   "Demande d’adhésion en attente de validation par votre syndic.": { "ar": "طلب الانضمام في انتظار موافقة السانديك.", "en": "Join request awaiting your syndic's approval." },
-  "Votre demande d’adhésion a été refusée. Contactez votre syndic.": { "ar": "تم رفض طلب انضمامك. تواصل مع السانديك.", "en": "Your join request was rejected. Contact your syndic." }
+  "Votre demande d’adhésion a été refusée. Contactez votre syndic.": { "ar": "تم رفض طلب انضمامك. تواصل مع السانديك.", "en": "Your join request was rejected. Contact your syndic." },
+  "Immeuble": { "ar": "العمارة", "en": "Building" },
+  "Espace suspendu : l’abonnement du syndic est terminé. L’accès sera rétabli dès son renouvellement.": { "ar": "الفضاء موقوف: انتهى اشتراك السانديك. سيتم استرجاع الوصول فور تجديده.", "en": "Space suspended: the syndic's subscription has ended. Access will be restored once it is renewed." }
 }
