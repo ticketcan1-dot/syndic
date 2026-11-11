@@ -91,3 +91,51 @@ export async function publishPost(form: FormData) {
   if (error) result("Publication refusée. Vérifiez vos droits.");
   result("Annonce publiée aux résidents de cette résidence.");
 }
+export async function decideJoinRequest(form: FormData) {
+  const { db } = await signedIn();
+  const input = z
+    .object({ id: z.uuid(), decision: z.enum(["approve", "reject"]) })
+    .safeParse(Object.fromEntries(form));
+  if (!input.success) result("Demande invalide.");
+  const { error } = await db.rpc("syndic_decide_join_request", {
+    target: input.data.id,
+    approve: input.data.decision === "approve",
+  });
+  if (error) result("Décision refusée. Vérifiez vos droits.");
+  result(
+    input.data.decision === "approve"
+      ? "Demande approuvée : l’habitant a maintenant accès à son logement."
+      : "Demande refusée.",
+  );
+}
+export async function moderateResident(form: FormData) {
+  const { db } = await signedIn();
+  const input = z
+    .object({
+      unit: z.uuid(),
+      user: z.uuid(),
+      task: z.enum(["block", "unblock", "remove"]),
+    })
+    .safeParse(Object.fromEntries(form));
+  if (!input.success) result("Action invalide.");
+  const v = input.data;
+  const { error } =
+    v.task === "remove"
+      ? await db.rpc("syndic_remove_resident", {
+          target_unit: v.unit,
+          target_user: v.user,
+        })
+      : await db.rpc("syndic_set_resident_blocked", {
+          target_unit: v.unit,
+          target_user: v.user,
+          blocked: v.task === "block",
+        });
+  if (error) result("Action refusée. Vérifiez vos droits.");
+  result(
+    v.task === "remove"
+      ? "Utilisateur supprimé de votre espace."
+      : v.task === "block"
+        ? "Utilisateur bloqué."
+        : "Utilisateur débloqué.",
+  );
+}

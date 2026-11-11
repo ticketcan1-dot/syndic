@@ -4,7 +4,9 @@ import { I18nText } from "@/components/i18n";
 import { platformAdmin } from "@/lib/access";
 import { Submit } from "@/components/submit";
 import { Notice } from "@/components/notice";
-import { setSubscription } from "./actions";
+import { setSubscription, decideAccount, reviewPayment, saveBilling } from "./actions";
+import { provisionClient } from "@/lib/provision";
+import { planLabels } from "@/lib/plans";
 import { provisionSyndic } from "./provision";
 const statuses: Record<string, string> = {
   trialing: "Essai",
@@ -22,7 +24,7 @@ export default async function Page({
   const intlLocale = await getIntlLocale();
 
   const { db } = await platformAdmin();
-  const [orgs, subs, history] = await Promise.all([
+  const [orgs, subs, history, requests, payments, billing] = await Promise.all([
     db.rpc("syndic_admin_organizations"),
     db.from("syndic_subscription_records").select("*"),
     db
@@ -30,7 +32,32 @@ export default async function Page({
       .select("id,organization_id,new_value,created_at")
       .order("created_at", { ascending: false })
       .limit(20),
+    db
+      .from("syndic_account_requests")
+      .select("*")
+      .eq("status", "pending")
+      .order("created_at"),
+    db
+      .from("syndic_subscription_payments")
+      .select("*")
+      .eq("status", "pending")
+      .order("created_at"),
+    db.from("syndic_billing_settings").select("*").maybeSingle(),
   ]);
+  const proofs: Record<string, string> = {};
+  if (payments.data?.length) {
+    try {
+      const { data } = await provisionClient()
+        .storage.from("syndic-payment-proofs")
+        .createSignedUrls(
+          payments.data.map((p) => p.proof_path),
+          3600,
+        );
+      data?.forEach((d) => {
+        if (d.path && d.signedUrl) proofs[d.path] = d.signedUrl;
+      });
+    } catch {}
+  }
   const organizations = (orgs.data ?? []) as {
     id: string;
     name: string;
@@ -58,6 +85,114 @@ export default async function Page({
         message={(await searchParams).message}
         error={Boolean(orgs.error || subs.error || history.error)}
       />
+      {(requests.data?.length || payments.data?.length) ? (
+        <div role="alert" className="notice">
+          🔔 <I18nText text="À traiter :" />
+          {requests.data?.length ?? 0} <I18nText text="compte(s) syndic" /> ·{" "}
+          {payments.data?.length ?? 0} <I18nText text="virement(s)" />
+        </div>
+      ) : null}
+      <section className="card" style={{ marginBottom: 24 }}>
+        <h2>
+          <I18nText text="Comptes syndic en attente d’approbation" />
+        </h2>
+        {!requests.data?.length && (
+          <p>
+            <I18nText text="Aucune demande en attente." />
+          </p>
+        )}
+        {requests.data?.map((r) => (
+          <article key={r.user_id} className="list-row">
+            <div>
+              <strong>{r.organization_name}</strong>
+              <p className="small">
+                {r.full_name} · {r.email} · {r.phone}
+              </p>
+              <p className="small">
+                <I18nText text="Plan souhaité" /> :{" "}
+                <I18nText text={planLabels[r.desired_plan] ?? r.desired_plan} /> ·{" "}
+                {new Date(r.created_at).toLocaleDateString(intlLocale)}
+              </p>
+            </div>
+            <div className="row-actions">
+              <form action={decideAccount}>
+                <input type="hidden" name="user_id" value={r.user_id} />
+                <input type="hidden" name="decision" value="approve" />
+                <Submit>
+                  <I18nText text="Approuver" />
+                </Submit>
+              </form>
+              <form action={decideAccount}>
+                <input type="hidden" name="user_id" value={r.user_id} />
+                <input type="hidden" name="decision" value="reject" />
+                <Submit>
+                  <I18nText text="Refuser" />
+                </Submit>
+              </form>
+            </div>
+          </article>
+        ))}
+      </section>
+      <section className="card" style={{ marginBottom: 24 }}>
+        <h2>
+          <I18nText text="Virements à vérifier" />
+        </h2>
+        {!payments.data?.length && (
+          <p>
+            <I18nText text="Aucun paiement en attente." />
+          </p>
+        )}
+        {payments.data?.map((p) => {
+          const url = proofs[p.proof_path];
+          return (
+            <article key={p.id} className="section-note" style={{ marginBottom: 18 }}>
+              <strong>
+                {organizations.find((o) => o.id === p.organization_id)?.name ??
+                  "Organisation"}
+              </strong>
+              <p className="small">
+                <I18nText text={planLabels[p.plan] ?? p.plan} /> · {p.months}{" "}
+                <I18nText text="mois" /> · {(p.amount_cents / 100).toLocaleString(intlLocale)} DH
+                {p.reference ? " · " + p.reference : ""} ·{" "}
+                {new Date(p.created_at).toLocaleString(intlLocale)}
+              </p>
+              {url ? (
+                p.proof_path.endsWith(".pdf") ? (
+                  <a href={url} target="_blank" rel="noreferrer" className="text-link">
+                    <I18nText text="Voir la capture du virement" />
+                  </a>
+                ) : (
+                  <a href={url} target="_blank" rel="noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt="Virement" className="proof-preview" />
+                  </a>
+                )
+              ) : (
+                <p className="small">
+                  <I18nText text="Capture indisponible (vérifiez SUPABASE_SECRET_KEY)." />
+                </p>
+              )}
+              <div className="row-actions" style={{ marginTop: 12 }}>
+                <form action={reviewPayment}>
+                  <input type="hidden" name="id" value={p.id} />
+                  <input type="hidden" name="decision" value="approve" />
+                  <Submit>
+                    <I18nText text="Valider et prolonger" />
+                  </Submit>
+                </form>
+                <form action={reviewPayment} className="row-actions">
+                  <input type="hidden" name="id" value={p.id} />
+                  <input type="hidden" name="decision" value="reject" />
+                  <LocalizedInput name="note" maxLength={500} placeholder="Motif du refus (facultatif)" />
+                  <Submit>
+                    <I18nText text="Refuser" />
+                  </Submit>
+                </form>
+              </div>
+            </article>
+          );
+        })}
+      </section>
       <div className="stats">
         <div className="card">
           <p>
@@ -149,6 +284,11 @@ export default async function Page({
               <details key={o.id}>
                 <summary>
                   {o.name} —<I18nText text={String(" ")} />
+                  {sub && (
+                    <>
+                      <I18nText text={planLabels[sub.plan] ?? sub.plan} /> ·{" "}
+                    </>
+                  )}
                   <I18nText text={sub
                     ? new Date(sub.ends_at) <= new Date() &&
                       ["active", "trialing"].includes(sub.status)
@@ -168,15 +308,15 @@ export default async function Page({
                   />
                   <label>
                     <I18nText text="Offre" />
-                    <select name="plan" defaultValue={sub?.plan ?? "essentiel"}>
-                      <option value="essentiel">
-                        <I18nText text="Essentiel" />
+                    <select name="plan" defaultValue={sub?.plan ?? "essai"}>
+                      <option value="essai">
+                        <I18nText text="Essai gratuit" />
                       </option>
-                      <option value="pro">
-                        <I18nText text="Pro" />
+                      <option value="standard">
+                        <I18nText text="Standard" />
                       </option>
-                      <option value="business">
-                        <I18nText text="Business" />
+                      <option value="entreprise">
+                        <I18nText text="Entreprise" />
                       </option>
                     </select>
                   </label>
@@ -223,6 +363,52 @@ export default async function Page({
       </section>
       <section className="card" style={{ marginTop: 24 }}>
         <h2>
+          <I18nText text="Coordonnées bancaires (RIB)" />
+        </h2>
+        <p>
+          <I18nText text="Affichées aux syndics dans leur page Abonnement." />
+        </p>
+        <form action={saveBilling} className="form">
+          <label>
+            <I18nText text="Titulaire" />
+            <LocalizedInput
+              name="account_holder"
+              maxLength={160}
+              defaultValue={billing.data?.account_holder ?? ""}
+            />
+          </label>
+          <label>
+            <I18nText text="Banque" />
+            <LocalizedInput
+              name="bank_name"
+              maxLength={160}
+              defaultValue={billing.data?.bank_name ?? ""}
+            />
+          </label>
+          <label>
+            <I18nText text="RIB" />
+            <LocalizedInput
+              name="rib"
+              maxLength={64}
+              defaultValue={billing.data?.rib ?? ""}
+            />
+          </label>
+          <label>
+            <I18nText text="Instructions" />
+            <textarea
+              name="instructions"
+              maxLength={1000}
+              rows={3}
+              defaultValue={billing.data?.instructions ?? ""}
+            />
+          </label>
+          <Submit>
+            <I18nText text="Enregistrer le RIB" />
+          </Submit>
+        </form>
+      </section>
+      <section className="card" style={{ marginTop: 24 }}>
+        <h2>
           <I18nText text="Dernières modifications" />
         </h2>
         {history.data?.length ? (
@@ -250,7 +436,7 @@ export default async function Page({
         )}
       </section>
       <p className="small" style={{ marginTop: 20 }}>
-        <I18nText text="Les statuts sont un suivi commercial. Le blocage automatique des opérations et les paiements en ligne ne sont pas activés." />
+        <I18nText text="Les paiements se font par virement bancaire : chaque capture est vérifiée manuellement avant prolongation." />
       </p>
     </>
   );

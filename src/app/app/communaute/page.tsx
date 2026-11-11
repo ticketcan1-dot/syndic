@@ -9,6 +9,29 @@ import { provisionResident } from "@/app/admin/provision";
 import { ShareLink } from "@/components/share-link";
 import { createJoinLink, revokeJoinLink } from "./actions";
 import { setupResidence, setupUnit } from "./actions";
+import { decideJoinRequest, moderateResident } from "./actions";
+type People = {
+  residents: {
+    unit_id: string;
+    user_id: string;
+    unit: string;
+    residence: string;
+    email: string;
+    name: string;
+    phone: string;
+    blocked: boolean;
+    revoked: boolean;
+  }[];
+  requests: {
+    id: string;
+    unit: string;
+    residence: string;
+    email: string;
+    name: string;
+    phone: string;
+    created_at: string;
+  }[];
+};
 export default async function Page({
   searchParams,
 }: {
@@ -20,7 +43,7 @@ export default async function Page({
     .from("syndic_join_links")
     .select("id,unit_id,expires_at,used_by,revoked_at")
     .order("created_at", { ascending: false });
-  const [invitations, posts] = await Promise.all([
+  const [invitations, posts, peopleResult] = await Promise.all([
     db
       .from("syndic_resident_invitations")
       .select("*")
@@ -30,7 +53,12 @@ export default async function Page({
       .select("*")
       .order("created_at", { ascending: false })
       .limit(30),
+    db.rpc("syndic_manager_people"),
   ]);
+  const people = (peopleResult.data ?? {
+    residents: [],
+    requests: [],
+  }) as People;
   return (
     <>
       <div className="page-heading">
@@ -45,8 +73,109 @@ export default async function Page({
       </div>
       <Notice
         message={(await searchParams).message}
-        error={data.error || Boolean(invitations.error || posts.error)}
+        error={
+          data.error ||
+          Boolean(invitations.error || posts.error || peopleResult.error)
+        }
       />
+      <section className="card" style={{ marginBottom: 24 }}>
+        <h2>
+          <I18nText text="Demandes d’adhésion" />
+        </h2>
+        {!people.requests.length && (
+          <p>
+            <I18nText text="Aucune demande en attente." />
+          </p>
+        )}
+        {people.requests.map((r) => (
+          <article key={r.id} className="list-row">
+            <div>
+              <strong>{r.name || r.email}</strong>
+              <p className="small">
+                {r.email} {r.phone ? "· " + r.phone : ""}
+              </p>
+              <p className="small">
+                {r.residence} · {r.unit}
+              </p>
+            </div>
+            <div className="row-actions">
+              <form action={decideJoinRequest}>
+                <input type="hidden" name="id" value={r.id} />
+                <input type="hidden" name="decision" value="approve" />
+                <Submit>
+                  <I18nText text="Approuver" />
+                </Submit>
+              </form>
+              <form action={decideJoinRequest}>
+                <input type="hidden" name="id" value={r.id} />
+                <input type="hidden" name="decision" value="reject" />
+                <Submit>
+                  <I18nText text="Refuser" />
+                </Submit>
+              </form>
+            </div>
+          </article>
+        ))}
+      </section>
+      <section className="card" style={{ marginBottom: 24 }}>
+        <h2>
+          <I18nText text="Utilisateurs de mon espace" />
+        </h2>
+        {!people.residents.length && (
+          <p>
+            <I18nText text="Aucun habitant pour le moment." />
+          </p>
+        )}
+        {people.residents.map((r) => (
+          <article key={r.unit_id + r.user_id} className="list-row">
+            <div>
+              <strong>{r.name || r.email}</strong>
+              <p className="small">
+                {r.email} {r.phone ? "· " + r.phone : ""}
+              </p>
+              <p className="small">
+                {r.residence} · {r.unit} ·{" "}
+                <span
+                  className={
+                    "status-pill " +
+                    (r.blocked || r.revoked ? "danger" : "ok")
+                  }
+                >
+                  <I18nText
+                    text={
+                      r.blocked ? "Bloqué" : r.revoked ? "Révoqué" : "Actif"
+                    }
+                  />
+                </span>
+              </p>
+            </div>
+            <div className="row-actions">
+              {(r.blocked || !r.revoked) && (
+                <form action={moderateResident}>
+                  <input type="hidden" name="unit" value={r.unit_id} />
+                  <input type="hidden" name="user" value={r.user_id} />
+                  <input
+                    type="hidden"
+                    name="task"
+                    value={r.blocked ? "unblock" : "block"}
+                  />
+                  <Submit>
+                    <I18nText text={r.blocked ? "Débloquer" : "Bloquer"} />
+                  </Submit>
+                </form>
+              )}
+              <form action={moderateResident}>
+                <input type="hidden" name="unit" value={r.unit_id} />
+                <input type="hidden" name="user" value={r.user_id} />
+                <input type="hidden" name="task" value="remove" />
+                <Submit>
+                  <I18nText text="Supprimer" />
+                </Submit>
+              </form>
+            </div>
+          </article>
+        ))}
+      </section>
       <section className="card" style={{ marginBottom: 24 }}>
         <h2>
           <I18nText text="Inviter par lien" />
@@ -169,7 +298,7 @@ export default async function Page({
                     link.revoked_at
                       ? "Révoqué"
                       : link.used_by
-                        ? "Compte créé"
+                        ? "Lien utilisé"
                         : new Date(link.expires_at) < new Date()
                           ? "Expiré"
                           : "En attente",

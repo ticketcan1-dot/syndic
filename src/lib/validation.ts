@@ -18,3 +18,15 @@ export const unitSchema = z.object({
   kind: z.enum(["apartment", "shop", "parking"]),
   share: z.coerce.number().positive().max(1000000),
 });
+export const signUpSchema = z.object({
+  first_name: z.string().trim().min(2).max(80),
+  last_name: z.string().trim().min(2).max(80),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\+?[0-9 ()-]{8,24}$/),
+  email: z.email(),
+  password: z.string().min(12).max(128),
+  organization: z.string().trim().min(1).max(120),
+  plan: z.enum(["essai", "standard", "entreprise"]),
+});

@@ -35,6 +35,7 @@ export const config = {
     "/connexion",
     "/reinitialiser-mot-de-passe",
     "/inscription",
+    "/en-attente",
     "/auth/:path*",
   ],
 };

@@ -33,7 +33,7 @@ export default async function Page({
   const intlLocale = await getIntlLocale();
 
   const { db, user } = await signedIn();
-  const [space, invitations] = await Promise.all([
+  const [space, invitations, requests] = await Promise.all([
     db.rpc("syndic_my_resident_space"),
     db
       .from("syndic_resident_invitations")
@@ -42,7 +42,14 @@ export default async function Page({
       .is("revoked_at", null)
       .is("accepted_at", null)
       .gt("expires_at", new Date().toISOString()),
+    db.rpc("syndic_my_join_requests"),
   ]);
+  const myRequests = ((requests.data ?? []) as {
+    id: string;
+    status: string;
+    unit: string;
+    residence: string;
+  }[]).filter((r) => r.status !== "approved");
   const data = (space.data ?? { units: [], posts: [] }) as ResidentSpace;
   return (
     <div className="container">
@@ -72,6 +79,22 @@ export default async function Page({
           message={(await searchParams).message}
           error={Boolean(space.error || invitations.error)}
         />
+        {myRequests.map((r) => (
+          <section key={r.id} className="card" style={{ marginBottom: 20 }}>
+            <h2>
+              {r.residence} · {r.unit}
+            </h2>
+            <p>
+              <I18nText
+                text={
+                  r.status === "pending"
+                    ? "Demande d’adhésion en attente de validation par votre syndic."
+                    : "Votre demande d’adhésion a été refusée. Contactez votre syndic."
+                }
+              />
+            </p>
+          </section>
+        ))}
         {invitations.data?.map((i) => (
           <section key={i.id} className="card" style={{ marginBottom: 20 }}>
             <h2>
@@ -105,6 +128,11 @@ export default async function Page({
             </h2>
             <p>
               <I18nText text="Demandez une invitation à l’adresse de votre compte. Aucun lot n’est encore associé à votre compte." />
+            </p>
+            <p>
+              <Link href="/en-attente" className="text-link">
+                <I18nText text="Vous êtes syndic ? Demander un compte syndic" />
+              </Link>
             </p>
           </section>
         )}

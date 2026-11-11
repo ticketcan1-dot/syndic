@@ -26,7 +26,7 @@ export function I18nText({ text }: { text: string }) {
 }
 export function SystemNotification({ text }: { text: string }) {
   const locale = useLocale();
-  const prefixes = ["Nouvelle cotisation : ", "Nouvelle réunion : ", "Réunion dans les prochaines 24 heures : ", "Incident déclaré : ", "Suivi de votre incident : "];
+  const prefixes = ["Nouvelle cotisation : ", "Nouvelle réunion : ", "Réunion dans les prochaines 24 heures : ", "Incident déclaré : ", "Suivi de votre incident : ", "Nouveau compte syndic à approuver : ", "Nouveau virement à vérifier : "];
   const prefix = prefixes.find((value) => text.startsWith(value));
   return <>{prefix ? translate(prefix.trim(), locale) + " " + text.slice(prefix.length) : translate(text, locale)}</>;
 }

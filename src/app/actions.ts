@@ -1,9 +1,10 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { supabase } from "@/lib/supabase/server";
 import {
-  credentials,
+  signUpSchema,
   organizationSchema,
   residenceSchema,
   unitSchema,
@@ -11,21 +12,43 @@ import {
 function message(path: string, text: string): never {
   redirect(`${path}?message=${encodeURIComponent(text)}`);
 }
+function safeNext(value: FormDataEntryValue | null) {
+  const next = String(value ?? "");
+  return /^\/rejoindre\/[0-9a-f-]{36}$/i.test(next) ? next : "";
+}
+async function landingFor(db: Awaited<ReturnType<typeof supabase>>) {
+  const { data } = await db.rpc("syndic_my_status");
+  const status = (data ?? {}) as {
+    admin?: boolean;
+    member?: boolean;
+    resident?: boolean;
+    request?: string | null;
+  };
+  if (status.admin) return "/admin";
+  if (status.member) return "/app";
+  if (status.request === "pending" || status.request === "rejected")
+    return "/en-attente";
+  if (status.resident) return "/operations";
+  return "/resident";
+}
 export async function signIn(form: FormData) {
   const email = String(form.get("email") ?? "");
   const password = String(form.get("password") ?? "");
+  const next = safeNext(form.get("next"));
+  const back = next ? `/connexion?next=${encodeURIComponent(next)}&` : "/connexion?";
   if (!email || !password)
-    message("/connexion", "Renseignez votre e-mail et votre mot de passe.");
+    redirect(back + "message=" + encodeURIComponent("Renseignez votre e-mail et votre mot de passe."));
   const db = await supabase();
   const { error } = await db.auth.signInWithPassword({ email, password });
   if (error)
-    message(
-      "/connexion",
-      "Connexion impossible. Vérifiez vos identifiants et la confirmation de votre adresse.",
+    redirect(
+      back +
+        "message=" +
+        encodeURIComponent(
+          "Connexion impossible. Vérifiez vos identifiants et la confirmation de votre adresse.",
+        ),
     );
-  const { data: isAdmin } = await db.rpc("syndic_is_platform_admin");
-  if (isAdmin === true) redirect("/admin");
-  const { data: resident } = await db.rpc("syndic_my_resident_space");
+  if (next) redirect(next);
   const { data: invitations } = await db
     .from("syndic_resident_invitations")
     .select("id")
@@ -35,10 +58,105 @@ export async function signIn(form: FormData) {
     .gt("expires_at", new Date().toISOString())
     .limit(1);
   if (invitations?.length) redirect("/resident");
-  redirect("/operations");
+  redirect(await landingFor(db));
 }
 export async function signUp(form: FormData) {
-  redirect("/connexion?message=Inscription%20publique%20fermée.");
+  const isSyndic = form.get("syndic") === "on";
+  const next = safeNext(form.get("next"));
+  const input = signUpSchema.safeParse({
+    ...Object.fromEntries(form),
+    organization: isSyndic ? form.get("organization") : "-",
+    plan: isSyndic ? form.get("plan") : "essai",
+  });
+  const back =
+    "/inscription?" +
+    (isSyndic ? "syndic=1&" : "") +
+    (next ? `next=${encodeURIComponent(next)}&` : "");
+  if (!input.success || (isSyndic && input.data.organization.length < 2))
+    message(
+      back.slice(0, -1),
+      isSyndic
+        ? "Vérifiez vos informations et le nom de votre syndic."
+        : "Vérifiez vos informations.",
+    );
+  const v = input.data;
+  if (v.password !== String(form.get("confirmation") ?? ""))
+    message(back.slice(0, -1), "Les mots de passe ne correspondent pas.");
+  let created = false;
+  try {
+    const { provisionClient } = await import("@/lib/provision");
+    const service = provisionClient();
+    const { data, error } = await service.auth.admin.createUser({
+      email: v.email,
+      password: v.password,
+      email_confirm: true,
+      user_metadata: {
+        first_name: v.first_name,
+        last_name: v.last_name,
+        phone: v.phone,
+        nickname: v.first_name,
+      },
+    });
+    created = !error && Boolean(data.user);
+  } catch {}
+  if (!created)
+    message(
+      back.slice(0, -1),
+      "Création impossible. Cette adresse possède peut-être déjà un compte : connectez-vous.",
+    );
+  const db = await supabase();
+  const { error } = await db.auth.signInWithPassword({
+    email: v.email,
+    password: v.password,
+  });
+  if (error) message("/connexion", "Votre compte est créé. Connectez-vous.");
+  if (isSyndic) {
+    const { error: requestError } = await db.rpc(
+      "syndic_request_syndic_account",
+      {
+        organization: v.organization,
+        plan_choice: v.plan,
+        person_name: `${v.first_name} ${v.last_name}`,
+        person_phone: v.phone,
+      },
+    );
+    if (requestError)
+      message("/en-attente", "Votre compte est créé, mais la demande syndic n’a pas pu être enregistrée. Réessayez ci-dessous.");
+    redirect("/en-attente");
+  }
+  if (next) redirect(next);
+  message("/resident", "Bienvenue ! Votre compte est créé.");
+}
+export async function requestSyndicAccount(form: FormData) {
+  const { db, user } = await authenticated();
+  const input = z
+    .object({
+      organization: z.string().trim().min(2).max(120),
+      plan: z.enum(["essai", "standard", "entreprise"]),
+      phone: z
+        .string()
+        .trim()
+        .regex(/^\+?[0-9 ()-]{8,24}$/),
+    })
+    .safeParse(Object.fromEntries(form));
+  if (!input.success) message("/en-attente", "Vérifiez vos informations.");
+  const meta = user.user_metadata ?? {};
+  const name =
+    `${meta.first_name ?? ""} ${meta.last_name ?? ""}`.trim() ||
+    user.email ||
+    "Syndic";
+  const { error } = await db.rpc("syndic_request_syndic_account", {
+    organization: input.data.organization,
+    plan_choice: input.data.plan,
+    person_name: name,
+    person_phone: input.data.phone,
+  });
+  message(
+    "/en-attente",
+    error
+      ? "Demande impossible : une demande est déjà en cours ou votre compte est déjà syndic."
+      : "Demande envoyée. Vous serez notifié après validation.",
+  );
 }
 export async function signOut() {
   const db = await supabase();

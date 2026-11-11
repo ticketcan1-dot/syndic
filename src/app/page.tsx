@@ -9,7 +9,11 @@ import {
   ShieldCheck,
   CalendarDays,
   ChevronRight,
+  Check,
+  Mail,
+  Phone,
 } from "lucide-react";
+import { plans, contact } from "@/lib/plans";
 import { Brand } from "@/components/brand";
 import { currentLocale } from "@/lib/locale-server";
 export default async function Home() {
@@ -25,6 +29,12 @@ export default async function Home() {
           <a href="#comment">
             <I18nText text="Comment ça marche" />
           </a>
+          <a href="#tarifs">
+            <I18nText text="Tarifs" />
+          </a>
+          <Link href="/inscription">
+            <I18nText text="Créer un compte" />
+          </Link>
           <Link href="/connexion" className="button primary">
             <I18nText text="Mon espace" />
             <ArrowUpRight size={17} />
@@ -179,16 +189,105 @@ export default async function Home() {
             </article>
           </div>
         </section>
+        <section className="landing-pricing" id="tarifs">
+          <span className="eyebrow">
+            <I18nText text="Tarifs" />
+          </span>
+          <h2>
+            <I18nText text="Un plan pour chaque syndic." />
+          </h2>
+          <p>
+            <I18nText text="Commencez gratuitement pendant un mois. Le compte des habitants est toujours gratuit." />
+          </p>
+          <div className="pricing-grid">
+            {plans.map((plan) => (
+              <article
+                key={plan.id}
+                className={plan.id === "standard" ? "featured" : ""}
+              >
+                <h3>
+                  <I18nText text={plan.name} />
+                </h3>
+                <div className="price">
+                  <strong>
+                    <I18nText text={plan.price} />
+                  </strong>
+                  <span>
+                    <I18nText text={plan.period} />
+                  </span>
+                </div>
+                <ul>
+                  {plan.features.map((feature) => (
+                    <li key={feature}>
+                      <Check size={16} />
+                      <I18nText text={feature} />
+                    </li>
+                  ))}
+                </ul>
+                {plan.id === "entreprise" ? (
+                  <a href="#contact" className="button outline">
+                    <I18nText text="Contacter l’entreprise" />
+                  </a>
+                ) : (
+                  <Link
+                    href="/inscription?syndic=1"
+                    className="button primary"
+                  >
+                    <I18nText
+                      text={
+                        plan.id === "essai"
+                          ? "Commencer l’essai gratuit"
+                          : "Choisir Standard"
+                      }
+                    />
+                  </Link>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+        <section className="landing-contact" id="contact">
+          <div>
+            <span className="eyebrow">
+              <I18nText text="Contact" />
+            </span>
+            <h2>
+              <I18nText text="Parlons de votre résidence." />
+            </h2>
+            <p>
+              <I18nText text="Une question, une offre Entreprise ? Notre équipe vous répond." />
+            </p>
+          </div>
+          <div className="contact-links">
+            <a href={`mailto:${contact.email}`}>
+              <Mail size={20} />
+              {contact.email}
+            </a>
+            <a href={`tel:${contact.phoneIntl}`}>
+              <Phone size={20} />
+              {contact.phone}
+            </a>
+            <a href={contact.whatsapp} target="_blank" rel="noopener noreferrer">
+              <MessageCircle size={20} />
+              <I18nText text="WhatsApp" />
+            </a>
+          </div>
+        </section>
         <section className="landing-cta">
           <h2>
             <I18nText text="Votre résidence." />
             <br />
             <I18nText text="Votre nouvel espace commun." />
           </h2>
-          <Link href="/connexion" className="button light">
-            <I18nText text="Se connecter" />
-            <ArrowUpRight size={18} />
-          </Link>
+          <div className="actions">
+            <Link href="/inscription" className="button light">
+              <I18nText text="Créer un compte" />
+              <ArrowUpRight size={18} />
+            </Link>
+            <Link href="/connexion" className="button light">
+              <I18nText text="Se connecter" />
+            </Link>
+          </div>
         </section>
       </main>
       <footer className="landing-footer">

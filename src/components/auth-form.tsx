@@ -7,9 +7,11 @@ import { signIn, signUp, resetPassword } from "@/app/actions";
 export function AuthForm({
   signup = false,
   message,
+  next,
 }: {
   signup?: boolean;
   message?: string;
+  next?: string;
 }) {
   return (
     <main className="auth-shell">
@@ -37,6 +39,7 @@ export function AuthForm({
           </div>
         )}
         <form action={signup ? signUp : signIn} className="form">
+          {next && <input type="hidden" name="next" value={next} />}
           <label>
             <I18nText text="Adresse e-mail" />
             <LocalizedInput
@@ -70,13 +73,19 @@ export function AuthForm({
           </Submit>
         </form>
         <p className="small" style={{ marginTop: 24 }}>
-          <I18nText text="Votre compte est fourni par votre administrateur ou votre syndic." />
+          <I18nText text="Pas encore de compte ?" />
           <Link
             className="text-link"
-            href={signup ? "/connexion" : "/inscription"}
+            href={
+              signup
+                ? "/connexion"
+                : next
+                  ? `/inscription?next=${encodeURIComponent(next)}`
+                  : "/inscription"
+            }
           >
             <I18nText
-              text={String(signup ? "Se connecter" : "Accès sur autorisation")}
+              text={String(signup ? "Se connecter" : "Créer un compte")}
             />
           </Link>
         </p>

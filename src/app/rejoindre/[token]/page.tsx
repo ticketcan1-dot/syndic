@@ -6,7 +6,8 @@ import { provisionClient } from "@/lib/provision";
 import { Brand } from "@/components/brand";
 import { Submit } from "@/components/submit";
 import { Notice } from "@/components/notice";
-import { joinResidence } from "./actions";
+import { joinResidence, joinWithAccount } from "./actions";
+import { supabase } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 export default async function Page({
   params,
@@ -16,6 +17,10 @@ export default async function Page({
   searchParams: Promise<{ message?: string }>;
 }) {
   const { token } = await params;
+  const session = await supabase();
+  const {
+    data: { user },
+  } = await session.auth.getUser();
   let residence = "";
   let manager = "";
   try {
@@ -73,6 +78,31 @@ export default async function Page({
               <strong>{manager}</strong>.
             </p>
             <Notice message={(await searchParams).message} />
+            <p className="form-note">
+              <I18nText text="Votre syndic validera votre demande avant l’ouverture de votre accès." />
+            </p>
+            {user ? (
+              <form action={joinWithAccount} className="form">
+                <input type="hidden" name="token" value={token} />
+                <p>
+                  <I18nText text="Connecté en tant que" />
+                  <strong>{user.email}</strong>
+                </p>
+                <Submit>
+                  <I18nText text="Rejoindre avec mon compte" />
+                </Submit>
+              </form>
+            ) : (
+            <>
+            <div className="notice">
+              <I18nText text="Vous avez déjà un compte ?" />
+              <Link
+                className="text-link"
+                href={`/connexion?next=${encodeURIComponent("/rejoindre/" + token)}`}
+              >
+                <I18nText text="Se connecter pour rejoindre" />
+              </Link>
+            </div>
             <form action={joinResidence} className="form">
               <LocalizedInput type="hidden" name="token" value={token} />
               <label>
@@ -143,6 +173,8 @@ export default async function Page({
                 <I18nText text="Rejoindre ma résidence" />
               </Submit>
             </form>
+            </>
+            )}
           </>
         ) : (
           <>

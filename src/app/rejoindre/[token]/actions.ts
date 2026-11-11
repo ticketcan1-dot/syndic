@@ -57,7 +57,7 @@ export async function joinResidence(form: FormData) {
       });
     } else {
       created = true;
-      const complete = await service.rpc("syndic_finish_join_link", {
+      const complete = await service.rpc("syndic_request_join_link", {
         token: v.token,
         attempt,
         account_id: result.data.user.id,
@@ -71,8 +71,8 @@ export async function joinResidence(form: FormData) {
         "?message=" +
         encodeURIComponent(
           created
-            ? "Votre compte existe, mais son association doit être terminée par votre syndic. Contactez-le."
-            : "Création impossible. Cette adresse peut déjà posséder un compte. Contactez votre syndic.",
+            ? "Votre compte est créé, mais la demande n’a pas pu être envoyée. Connectez-vous puis rouvrez le lien."
+            : "Création impossible. Cette adresse possède peut-être déjà un compte : connectez-vous pour rejoindre la résidence.",
         ),
     );
   const db = await supabase();
@@ -83,6 +83,33 @@ export async function joinResidence(form: FormData) {
   redirect(
     error
       ? "/connexion?message=Votre%20compte%20est%20créé.%20Connectez-vous."
-      : "/operations",
+      : "/resident?message=" + encodeURIComponent(sent),
   );
+}
+const sent =
+  "Demande envoyée. Votre syndic doit l’approuver avant l’ouverture de votre accès.";
+export async function joinWithAccount(form: FormData) {
+  const token = z.uuid().safeParse(form.get("token"));
+  if (!token.success) redirect("/connexion");
+  const db = await supabase();
+  const {
+    data: { user },
+  } = await db.auth.getUser();
+  if (!user)
+    redirect(
+      "/connexion?next=" + encodeURIComponent("/rejoindre/" + token.data),
+    );
+  const { error } = await db.rpc("syndic_request_join", {
+    token: token.data,
+  });
+  if (error)
+    redirect(
+      "/rejoindre/" +
+        token.data +
+        "?message=" +
+        encodeURIComponent(
+          "Demande impossible : lien déjà utilisé, expiré, ou vous avez déjà accès à ce logement.",
+        ),
+    );
+  redirect("/resident?message=" + encodeURIComponent(sent));
 }

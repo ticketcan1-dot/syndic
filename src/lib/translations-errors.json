@@ -334,5 +334,145 @@
   "Code invalide ou expiré. Demandez un nouveau code.": {
     "ar": "الرمز غير صالح أو منتهي الصلاحية. اطلب رمزًا جديدًا.",
     "en": "Invalid or expired code. Request a new code."
+  },
+  "Demande envoyée. Votre syndic doit l’approuver avant l’ouverture de votre accès.": {
+    "ar": "تم إرسال الطلب. يجب أن يوافق السانديك قبل فتح وصولك.",
+    "en": "Request sent. Your syndic must approve it before your access opens."
+  },
+  "Bienvenue ! Votre compte est créé.": {
+    "ar": "مرحباً! تم إنشاء حسابك.",
+    "en": "Welcome! Your account has been created."
+  },
+  "Vérifiez vos informations et le nom de votre syndic.": {
+    "ar": "تحقق من معلوماتك واسم السانديك.",
+    "en": "Check your details and your syndic name."
+  },
+  "Création impossible. Cette adresse possède peut-être déjà un compte : connectez-vous.": {
+    "ar": "تعذر الإنشاء. قد يكون لهذا البريد حساب بالفعل: سجل الدخول.",
+    "en": "Unable to create. This address may already have an account: sign in."
+  },
+  "Votre compte est créé, mais la demande syndic n’a pas pu être enregistrée. Réessayez ci-dessous.": {
+    "ar": "تم إنشاء حسابك، لكن تعذر تسجيل طلب السانديك. أعد المحاولة أدناه.",
+    "en": "Your account is created, but the syndic request could not be saved. Try again below."
+  },
+  "Demande impossible : une demande est déjà en cours ou votre compte est déjà syndic.": {
+    "ar": "تعذر الطلب: يوجد طلب قيد المعالجة أو حسابك سانديك بالفعل.",
+    "en": "Request impossible: a request is already pending or your account is already a syndic."
+  },
+  "Demande envoyée. Vous serez notifié après validation.": {
+    "ar": "تم إرسال الطلب. سيتم إشعارك بعد الموافقة.",
+    "en": "Request sent. You will be notified after approval."
+  },
+  "Demande impossible : lien déjà utilisé, expiré, ou vous avez déjà accès à ce logement.": {
+    "ar": "تعذر الطلب: الرابط مستعمل أو منتهي، أو لديك وصول لهذا السكن.",
+    "en": "Request impossible: link already used, expired, or you already have access to this home."
+  },
+  "Votre compte est créé, mais la demande n’a pas pu être envoyée. Connectez-vous puis rouvrez le lien.": {
+    "ar": "تم إنشاء حسابك، لكن تعذر إرسال الطلب. سجل الدخول ثم افتح الرابط مجدداً.",
+    "en": "Your account is created, but the request could not be sent. Sign in and reopen the link."
+  },
+  "Création impossible. Cette adresse possède peut-être déjà un compte : connectez-vous pour rejoindre la résidence.": {
+    "ar": "تعذر الإنشاء. قد يكون لهذا البريد حساب: سجل الدخول للانضمام إلى الإقامة.",
+    "en": "Unable to create. This address may already have an account: sign in to join the residence."
+  },
+  "Paiement envoyé. Votre abonnement sera prolongé dès la validation du virement.": {
+    "ar": "تم إرسال الدفعة. سيتم تمديد اشتراكك فور تأكيد التحويل.",
+    "en": "Payment sent. Your subscription will be extended once the transfer is validated."
+  },
+  "Envoi impossible. Vérifiez vos informations (3 paiements en attente maximum) ou réessayez.": {
+    "ar": "تعذر الإرسال. تحقق من معلوماتك (3 دفعات معلقة كحد أقصى) أو أعد المحاولة.",
+    "en": "Unable to send. Check your details (3 pending payments maximum) or try again."
+  },
+  "Ajoutez la capture d’écran de votre virement.": {
+    "ar": "أضف صورة شاشة التحويل.",
+    "en": "Add the screenshot of your transfer."
+  },
+  "Format accepté : image PNG, JPG, WEBP ou PDF de 5 Mo maximum.": {
+    "ar": "الصيغ المقبولة: PNG أو JPG أو WEBP أو PDF بحد أقصى 5 ميغابايت.",
+    "en": "Accepted: PNG, JPG, WEBP or PDF up to 5 MB."
+  },
+  "Vérifiez le plan, la durée et le montant.": {
+    "ar": "تحقق من الباقة والمدة والمبلغ.",
+    "en": "Check the plan, duration and amount."
+  },
+  "Indiquez le montant viré.": {
+    "ar": "أدخل المبلغ المحول.",
+    "en": "Enter the amount transferred."
+  },
+  "Compte syndic approuvé : essai gratuit d’un mois activé.": {
+    "ar": "تمت الموافقة على حساب السانديك: تم تفعيل تجربة مجانية لمدة شهر.",
+    "en": "Syndic account approved: one-month free trial activated."
+  },
+  "Demande de compte syndic refusée.": {
+    "ar": "تم رفض طلب حساب السانديك.",
+    "en": "Syndic account request rejected."
+  },
+  "Paiement validé : abonnement prolongé.": {
+    "ar": "تم تأكيد الدفعة: تم تمديد الاشتراك.",
+    "en": "Payment approved: subscription extended."
+  },
+  "Paiement refusé.": {
+    "ar": "تم رفض الدفعة.",
+    "en": "Payment rejected."
+  },
+  "Coordonnées bancaires enregistrées.": {
+    "ar": "تم حفظ المعلومات البنكية.",
+    "en": "Bank details saved."
+  },
+  "Demande approuvée : l’habitant a maintenant accès à son logement.": {
+    "ar": "تمت الموافقة: لدى الساكن الآن وصول إلى سكنه.",
+    "en": "Request approved: the resident now has access to their home."
+  },
+  "Demande refusée.": {
+    "ar": "تم رفض الطلب.",
+    "en": "Request rejected."
+  },
+  "Utilisateur supprimé de votre espace.": {
+    "ar": "تم حذف المستخدم من فضائك.",
+    "en": "User removed from your space."
+  },
+  "Utilisateur bloqué.": {
+    "ar": "تم حظر المستخدم.",
+    "en": "User blocked."
+  },
+  "Utilisateur débloqué.": {
+    "ar": "تم إلغاء حظر المستخدم.",
+    "en": "User unblocked."
+  },
+  "Action refusée. Vérifiez vos droits.": {
+    "ar": "تم رفض الإجراء. تحقق من صلاحياتك.",
+    "en": "Action refused. Check your rights."
+  },
+  "Nouveau compte syndic à approuver :": {
+    "ar": "حساب سانديك جديد للموافقة:",
+    "en": "New syndic account to approve:"
+  },
+  "Nouveau virement à vérifier :": {
+    "ar": "تحويل جديد للتحقق:",
+    "en": "New transfer to verify:"
+  },
+  "Paiement validé : abonnement prolongé": {
+    "ar": "تم تأكيد الدفعة: تم تمديد الاشتراك",
+    "en": "Payment approved: subscription extended"
+  },
+  "Paiement refusé : contactez le support": {
+    "ar": "تم رفض الدفعة: تواصل مع الدعم",
+    "en": "Payment rejected: contact support"
+  },
+  "Nouvelle demande d'adhésion à valider": {
+    "ar": "طلب انضمام جديد للموافقة",
+    "en": "New join request to approve"
+  },
+  "Votre demande d'adhésion est acceptée": {
+    "ar": "تم قبول طلب انضمامك",
+    "en": "Your join request was accepted"
+  },
+  "Votre demande d'adhésion a été refusée": {
+    "ar": "تم رفض طلب انضمامك",
+    "en": "Your join request was rejected"
+  },
+  "Votre compte syndic est approuvé : essai gratuit d'un mois": {
+    "ar": "تمت الموافقة على حساب السانديك: تجربة مجانية لمدة شهر",
+    "en": "Your syndic account is approved: one-month free trial"
   }
 }

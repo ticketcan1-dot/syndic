@@ -9,7 +9,18 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = await platformAdmin();
+  const { db, user } = await platformAdmin();
+  const [accounts, payments] = await Promise.all([
+    db
+      .from("syndic_account_requests")
+      .select("user_id", { count: "exact", head: true })
+      .eq("status", "pending"),
+    db
+      .from("syndic_subscription_payments")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending"),
+  ]);
+  const pending = (accounts.count ?? 0) + (payments.count ?? 0);
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -17,6 +28,7 @@ export default async function Layout({
         <nav>
           <Link href="/admin">
             <I18nText text="Administration plateforme" />
+            {pending > 0 && <span className="badge">🔔 {pending}</span>}
           </Link>
           <Link href="/app">
             <I18nText text="Espace syndic" />

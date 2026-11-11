@@ -45,3 +45,5 @@ Les tests PostgreSQL embarqués PGlite vérifient RLS et les contraintes avec de
 `src/app` : routes et actions serveur ; `src/components` : interface ; `src/lib` : données, Supabase, validations ; `supabase/migrations` : SQL versionné ; `tests` : validation et sécurité ; `.github/workflows` : CI.
 
 Réinitialisation par code à six chiffres : voir [la configuration et la recette Supabase Auth](docs/password-recovery.md). Appliquer le modèle d’e-mail et les paramètres OTP avant de déployer cette version ; aucune migration SQL n’est requise.
+
+Inscription publique, approbation des comptes syndic, plans (essai 1 mois, Standard 30 DH/mois, Entreprise sur devis), paiement par virement avec validation dans `/admin`, demandes d’adhésion et blocage/suppression des habitants : voir [docs/inscription-abonnements.md](docs/inscription-abonnements.md).
