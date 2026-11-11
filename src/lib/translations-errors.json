@@ -294,5 +294,45 @@
   "Mon profil": {
     "ar": "ملفي الشخصي",
     "en": "My profile"
+  },
+  "Envoyer le code": {
+    "ar": "إرسال الرمز",
+    "en": "Send code"
+  },
+  "J’ai déjà un code": {
+    "ar": "لدي رمز بالفعل",
+    "en": "I already have a code"
+  },
+  "Réinitialiser le mot de passe": {
+    "ar": "إعادة تعيين كلمة المرور",
+    "en": "Reset password"
+  },
+  "Code à 6 chiffres": {
+    "ar": "رمز من 6 أرقام",
+    "en": "6-digit code"
+  },
+  "Confirmer le mot de passe": {
+    "ar": "تأكيد كلمة المرور",
+    "en": "Confirm password"
+  },
+  "Demander un nouveau code": {
+    "ar": "طلب رمز جديد",
+    "en": "Request a new code"
+  },
+  "Si ce compte existe, un code de réinitialisation sera envoyé.": {
+    "ar": "إذا كان الحساب موجودًا، فسيتم إرسال رمز لإعادة التعيين.",
+    "en": "If this account exists, a reset code will be sent."
+  },
+  "Indiquez votre e-mail et le code à 6 chiffres.": {
+    "ar": "أدخل بريدك الإلكتروني والرمز المكون من 6 أرقام.",
+    "en": "Enter your email and the 6-digit code."
+  },
+  "Les mots de passe ne correspondent pas.": {
+    "ar": "كلمتا المرور غير متطابقتين.",
+    "en": "Passwords do not match."
+  },
+  "Code invalide ou expiré. Demandez un nouveau code.": {
+    "ar": "الرمز غير صالح أو منتهي الصلاحية. اطلب رمزًا جديدًا.",
+    "en": "Invalid or expired code. Request a new code."
   }
 }

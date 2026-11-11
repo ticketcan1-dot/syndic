@@ -33,6 +33,7 @@ export const config = {
     "/admin/:path*",
     "/resident/:path*",
     "/connexion",
+    "/reinitialiser-mot-de-passe",
     "/inscription",
     "/auth/:path*",
   ],

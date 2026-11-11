@@ -95,9 +95,12 @@ export function AuthForm({
                 <LocalizedInput name="email" type="email" required />
               </label>
               <Submit>
-                <I18nText text="Envoyer le lien" />
+                <I18nText text="Envoyer le code" />
               </Submit>
             </form>
+            <Link className="text-link" href="/reinitialiser-mot-de-passe">
+              <I18nText text="J’ai déjà un code" />
+            </Link>
           </details>
         )}
       </div>

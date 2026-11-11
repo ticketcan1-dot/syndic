@@ -46,16 +46,38 @@ export async function signOut() {
   redirect("/connexion");
 }
 export async function resetPassword(form: FormData) {
-  const email = String(form.get("email") ?? "");
-  if (!email.includes("@")) message("/connexion", "Indiquez votre e-mail.");
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254)
+    message("/connexion", "Indiquez votre e-mail.");
   const db = await supabase();
-  await db.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/app/mot-de-passe`,
-  });
+  // The recovery email template must contain {{ .Token }} (see docs).
+  await db.auth.resetPasswordForEmail(email);
   message(
-    "/connexion",
-    "Si ce compte existe, un lien de réinitialisation sera envoyé.",
+    "/reinitialiser-mot-de-passe",
+    "Si ce compte existe, un code de réinitialisation sera envoyé.",
   );
+}
+export async function resetPasswordWithCode(form: FormData) {
+  const path = "/reinitialiser-mot-de-passe";
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const token = String(form.get("code") ?? "").trim();
+  const password = String(form.get("password") ?? "");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || !/^[0-9]{6}$/.test(token))
+    message(path, "Indiquez votre e-mail et le code à 6 chiffres.");
+  if (password.length < 12 || password.length > 128)
+    message(path, "Choisissez entre 12 et 128 caractères.");
+  if (password !== String(form.get("confirmation") ?? ""))
+    message(path, "Les mots de passe ne correspondent pas.");
+  const db = await supabase();
+  const { data, error } = await db.auth.verifyOtp({ email, token, type: "recovery" });
+  if (error || !data.user || !data.session)
+    message(path, "Code invalide ou expiré. Demandez un nouveau code.");
+  const { error: updateError } = await db.auth.updateUser({ password });
+  // Clear the recovery session; the next login uses the new password.
+  await db.auth.signOut({ scope: "local" });
+  if (updateError)
+    message(path, "Impossible de modifier le mot de passe. Recommencez la réinitialisation.");
+  message("/connexion", "Mot de passe mis à jour.");
 }
 export async function updatePassword(form: FormData) {
   const password = String(form.get("password") ?? "");

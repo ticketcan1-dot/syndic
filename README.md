@@ -43,3 +43,5 @@ Les tests PostgreSQL embarqués PGlite vérifient RLS et les contraintes avec de
 ## Structure
 
 `src/app` : routes et actions serveur ; `src/components` : interface ; `src/lib` : données, Supabase, validations ; `supabase/migrations` : SQL versionné ; `tests` : validation et sécurité ; `.github/workflows` : CI.
+
+Réinitialisation par code à six chiffres : voir [la configuration et la recette Supabase Auth](docs/password-recovery.md). Appliquer le modèle d’e-mail et les paramètres OTP avant de déployer cette version ; aucune migration SQL n’est requise.
