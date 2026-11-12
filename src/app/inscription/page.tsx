@@ -3,6 +3,7 @@ import { I18nText } from "@/components/i18n";
 import { Brand } from "@/components/brand";
 import { Notice } from "@/components/notice";
 import { SignUpForm } from "@/components/signup-form";
+import { JoinContext } from "@/components/join-context";
 export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
@@ -23,6 +24,7 @@ export default async function Page({
         <p>
           <I18nText text="Habitant ou syndic, créez votre compte en une minute." />
         </p>
+        <JoinContext next={next} />
         <Notice message={params.message} />
         <SignUpForm syndic={params.syndic === "1"} next={next} />
         <p className="small" style={{ marginTop: 24 }}>

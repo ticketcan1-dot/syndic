@@ -8,10 +8,12 @@ export function AuthForm({
   signup = false,
   message,
   next,
+  context,
 }: {
   signup?: boolean;
   message?: string;
   next?: string;
+  context?: React.ReactNode;
 }) {
   return (
     <main className="auth-shell">
@@ -33,6 +35,7 @@ export function AuthForm({
             )}
           />
         </p>
+        {context}
         {message && (
           <div className="notice" role="status">
             <I18nText text={message} />

@@ -542,5 +542,9 @@
   "Demande impossible : lien expiré, ou une demande est déjà en cours pour cette résidence.": {
     "ar": "تعذر الطلب: الرابط منتهي أو يوجد طلب قيد المعالجة لهذه الإقامة.",
     "en": "Request impossible: link expired, or a request is already pending for this residence."
+  },
+  "Vous avez déjà une demande ou un accès pour cette résidence.": {
+    "ar": "لديك بالفعل طلب أو وصول لهذه الإقامة.",
+    "en": "You already have a request or access for this residence."
   }
 }

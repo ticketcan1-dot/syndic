@@ -30,9 +30,10 @@ export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ message?: string }>;
+  searchParams: Promise<{ message?: string; espace?: string }>;
 }) {
   const intlLocale = await getIntlLocale();
+  const query = await searchParams;
 
   const { db, user } = await signedIn();
   const [space, invitations, requests] = await Promise.all([
@@ -54,6 +55,10 @@ export default async function Page({
   }[]).filter((r) => r.status !== "approved");
   const data = (space.data ?? { units: [], posts: [] }) as ResidentSpace;
   const residences = data.residences ?? [];
+  // Current space: chosen in the switcher, otherwise the first residence.
+  const current = residences.find((r) => r.id === query.espace) ?? residences[0];
+  const shownResidences = current ? [current] : [];
+  const posts = current ? data.posts.filter((p) => p.residence_id === current.id) : data.posts;
   return (
     <div className="container">
       <header className="public-nav">
@@ -80,7 +85,7 @@ export default async function Page({
         <p>{user.email}</p>
         <SuspendedNotice />
         <Notice
-          message={(await searchParams).message}
+          message={query.message}
           error={Boolean(space.error || invitations.error)}
         />
         {myRequests.map((r) => (
@@ -112,8 +117,20 @@ export default async function Page({
             </form>
           </section>
         ))}
+        {residences.length > 1 && (
+          <nav className="space-switcher" aria-label="Espaces">
+            <span className="small">
+              <I18nText text="Changer d’espace :" />
+            </span>
+            {residences.map((r) => (
+              <Link key={r.id} href={`/resident?espace=${r.id}`} className={r.id === current?.id ? "selected" : ""} aria-current={r.id === current?.id ? "page" : undefined}>
+                {r.name}
+              </Link>
+            ))}
+          </nav>
+        )}
         <div className="grid3">
-          {residences.map((r) => {
+          {shownResidences.map((r) => {
             const mine = data.units.filter((u) => u.residence_id === r.id);
             return (
               <section className="card" key={r.id}>
@@ -157,8 +174,8 @@ export default async function Page({
           <h2>
             <I18nText text="Activités et annonces" />
           </h2>
-          {data.posts.length ? (
-            data.posts.map((p) => (
+          {posts.length ? (
+            posts.map((p) => (
               <article className="card" key={p.id} style={{ marginBottom: 16 }}>
                 <span className="small">
                   {new Date(p.created_at).toLocaleDateString(intlLocale)}

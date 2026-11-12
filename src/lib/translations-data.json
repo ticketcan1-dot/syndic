@@ -794,5 +794,13 @@
   "Mes appartements": { "ar": "شققي", "en": "My apartments" },
   "gérée par": { "ar": "يسيرها", "en": "managed by" },
   "Appartement (facultatif)": { "ar": "الشقة (اختياري)", "en": "Apartment (optional)" },
-  "Créer mon compte et rejoindre": { "ar": "إنشاء حسابي والانضمام", "en": "Create my account and join" }
+  "Créer mon compte et rejoindre": { "ar": "إنشاء حسابي والانضمام", "en": "Create my account and join" },
+  "Changer d’espace :": { "ar": "تغيير الفضاء:", "en": "Switch space:" },
+  "Pour rejoindre": { "ar": "للانضمام إلى", "en": "To join" },
+  "Voulez-vous rejoindre": { "ar": "هل تريد الانضمام إلى", "en": "Do you want to join" },
+  "Ce lien vous a été envoyé par": { "ar": "تم إرسال هذا الرابط من طرف", "en": "This link was sent to you by" },
+  "Oui, rejoindre la résidence": { "ar": "نعم، الانضمام إلى الإقامة", "en": "Yes, join the residence" },
+  "Avez-vous un compte sur SyndiConnect ?": { "ar": "هل لديك حساب على SyndiConnect؟", "en": "Do you have a SyndiConnect account?" },
+  "Oui, me connecter": { "ar": "نعم، تسجيل الدخول", "en": "Yes, sign in" },
+  "Non, créer mon compte": { "ar": "لا، إنشاء حسابي", "en": "No, create my account" }
 }

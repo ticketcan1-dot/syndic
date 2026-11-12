@@ -31,6 +31,35 @@ async function landingFor(db: Awaited<ReturnType<typeof supabase>>) {
   if (status.resident) return "/operations";
   return "/resident";
 }
+// After sign-in / sign-up from a residence invitation link, send the join request right away.
+async function joinFromLink(
+  db: Awaited<ReturnType<typeof supabase>>,
+  next: string,
+  apartment: string,
+): Promise<never> {
+  const token = next.split("/").pop() ?? "";
+  const { data: info } = await db.rpc("syndic_residence_link_info", { token });
+  if (!info) redirect(next);
+  const {
+    data: { user },
+  } = await db.auth.getUser();
+  const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
+  const str = (k: string) => (typeof meta[k] === "string" ? (meta[k] as string) : "");
+  const { error } = await db.rpc("syndic_join_residence", {
+    token,
+    member_name: `${str("first_name")} ${str("last_name")}`.trim(),
+    member_phone: str("phone").slice(0, 24),
+    apartment: apartment.trim().slice(0, 60),
+  });
+  redirect(
+    "/resident?message=" +
+      encodeURIComponent(
+        error
+          ? "Vous avez déjà une demande ou un accès pour cette résidence."
+          : "Demande envoyée. Votre syndic doit l’approuver avant l’ouverture de votre accès.",
+      ),
+  );
+}
 export async function signIn(form: FormData) {
   const email = String(form.get("email") ?? "");
   const password = String(form.get("password") ?? "");
@@ -48,7 +77,7 @@ export async function signIn(form: FormData) {
           "Connexion impossible. Vérifiez vos identifiants et la confirmation de votre adresse.",
         ),
     );
-  if (next) redirect(next);
+  if (next) await joinFromLink(db, next, "");
   const { data: invitations } = await db
     .from("syndic_resident_invitations")
     .select("id")
@@ -124,7 +153,7 @@ export async function signUp(form: FormData) {
       message("/en-attente", "Votre compte est créé, mais la demande syndic n’a pas pu être enregistrée. Réessayez ci-dessous.");
     redirect("/en-attente");
   }
-  if (next) redirect(next);
+  if (next) await joinFromLink(db, next, String(form.get("apartment") ?? ""));
   message("/resident", "Bienvenue ! Votre compte est créé.");
 }
 export async function requestSyndicAccount(form: FormData) {

@@ -81,6 +81,12 @@ export function SignUpForm({
           maxLength={128}
         />
       </label>
+      {next && (
+        <label>
+          <I18nText text="Appartement (facultatif)" />
+          <LocalizedInput name="apartment" maxLength={60} placeholder="A-12" />
+        </label>
+      )}
       {!next && (
         <label className="checkbox-row">
           <input
