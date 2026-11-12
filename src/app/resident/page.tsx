@@ -10,6 +10,7 @@ import { Submit } from "@/components/submit";
 import { signOut } from "@/app/actions";
 import { acceptInvitation } from "./actions";
 type ResidentSpace = {
+  residences?: { id: string; name: string; city: string; syndic: string }[];
   units: {
     id: string;
     label: string;
@@ -52,6 +53,7 @@ export default async function Page({
     residence: string;
   }[]).filter((r) => r.status !== "approved");
   const data = (space.data ?? { units: [], posts: [] }) as ResidentSpace;
+  const residences = data.residences ?? [];
   return (
     <div className="container">
       <header className="public-nav">
@@ -83,9 +85,7 @@ export default async function Page({
         />
         {myRequests.map((r) => (
           <section key={r.id} className="card" style={{ marginBottom: 20 }}>
-            <h2>
-              {r.residence} · {r.unit}
-            </h2>
+            <h2>{r.residence}</h2>
             <p>
               <I18nText
                 text={
@@ -94,6 +94,7 @@ export default async function Page({
                     : "Votre demande d’adhésion a été refusée. Contactez votre syndic."
                 }
               />
+              {r.unit ? " · " + r.unit : ""}
             </p>
           </section>
         ))}
@@ -112,7 +113,21 @@ export default async function Page({
           </section>
         ))}
         <div className="grid3">
-          {data.units.map((u) => (
+          {residences.map((r) => {
+            const mine = data.units.filter((u) => u.residence_id === r.id);
+            return (
+              <section className="card" key={r.id}>
+                <span className="badge">{r.city}</span>
+                <h2 style={{ marginTop: 12 }}>{r.name}</h2>
+                <p className="small">{r.syndic}</p>
+                <p>
+                  <I18nText text="Mes appartements" /> :{" "}
+                  {mine.length ? mine.map((u) => u.label).join(", ") : "—"}
+                </p>
+              </section>
+            );
+          })}
+          {data.units.filter((u) => !residences.some((r) => r.id === u.residence_id)).map((u) => (
             <section className="card" key={u.id}>
               <span className="badge">{u.city}</span>
               <h2 style={{ marginTop: 12 }}>{u.residence}</h2>
@@ -123,7 +138,7 @@ export default async function Page({
             </section>
           ))}
         </div>
-        {!data.units.length && (
+        {!data.units.length && !residences.length && (
           <section className="card">
             <h2>
               <I18nText text="En attente de votre syndic" />

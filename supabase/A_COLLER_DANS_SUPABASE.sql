@@ -1,351 +1,242 @@
--- A COLLER dans Supabase > SQL Editor > New query, puis Run. (3 migrations SyndiConnect, une seule fois)
+-- A COLLER dans Supabase > SQL Editor > New query, puis Run (une seule fois).
+-- Invitations par résidence, appartement facultatif, plusieurs appartements par habitant.
+-- Residence-level invitations: one reusable link per residence, residents sign up with their own
+-- e-mail/password/name and an optional apartment, the syndic approves, then edits their details.
+-- A resident may hold several apartments, in one or several residences.
 begin;
--- ===== 202611110001_signup_billing
--- Public sign-up, syndic approval, join requests, resident moderation and subscription payments by bank transfer.
--- Additive except: widened CHECK constraints (plans, inbox links) and one nullable column on syndic_resident_access.
-
--- Plans: free trial (1 month), standard (30 MAD / month), entreprise (on quote). Legacy values stay valid.
-alter table public.syndic_subscription_records drop constraint syndic_subscription_records_plan_check;
-alter table public.syndic_subscription_records add constraint syndic_subscription_records_plan_check
- check(plan in ('essentiel','pro','business','essai','standard','entreprise'));
-alter table public.syndic_inbox drop constraint syndic_inbox_link_check;
-alter table public.syndic_inbox add constraint syndic_inbox_link_check
- check(link in ('/resident','/operations','/app/abonnement','/app/communaute','/admin'));
-
--- 1. Syndic account requests (approved by a platform admin) ------------------------------------
-create table public.syndic_account_requests (
- user_id uuid primary key references auth.users(id) on delete cascade,
- email text not null,
- full_name text not null check(char_length(trim(full_name)) between 2 and 160),
- phone text not null check(char_length(trim(phone)) between 6 and 24),
- organization_name text not null check(char_length(trim(organization_name)) between 2 and 120),
- desired_plan text not null check(desired_plan in ('essai','standard','entreprise')),
- status text not null default 'pending' check(status in ('pending','approved','rejected')),
- organization_id uuid references public.syndic_organizations(id),
+create table public.syndic_residence_links (
+ id uuid primary key default gen_random_uuid(),
+ residence_id uuid not null references public.syndic_residences(id),
+ created_by uuid not null references auth.users(id),
  created_at timestamptz not null default now(),
- decided_at timestamptz, decided_by uuid references auth.users(id)
+ expires_at timestamptz not null default now()+interval '30 days',
+ revoked_at timestamptz
 );
-alter table public.syndic_account_requests enable row level security;
-revoke all on public.syndic_account_requests from anon,authenticated;
-grant select on public.syndic_account_requests to authenticated;
-create policy syndic_account_request_read on public.syndic_account_requests for select to authenticated
- using(user_id=auth.uid() or public.syndic_is_platform_admin());
+alter table public.syndic_residence_links enable row level security;
+revoke all on public.syndic_residence_links from anon,authenticated;
+grant select on public.syndic_residence_links to authenticated;
+create policy syndic_residence_link_read on public.syndic_residence_links for select to authenticated using(public.syndic_manages_residence(residence_id));
 
-create function public.syndic_request_syndic_account(organization text,plan_choice text,person_name text,person_phone text) returns void
-language plpgsql security definer set search_path='' as $$
-declare mail text;
-begin
- if auth.uid() is null then raise exception 'Authentication required'; end if;
- if exists(select 1 from public.syndic_organization_members where user_id=auth.uid()) then raise exception 'Already a syndic'; end if;
- select lower(email) into mail from auth.users where id=auth.uid();
- insert into public.syndic_account_requests(user_id,email,full_name,phone,organization_name,desired_plan)
- values(auth.uid(),mail,trim(person_name),trim(person_phone),trim(organization),plan_choice)
- on conflict(user_id) do update set organization_name=excluded.organization_name,desired_plan=excluded.desired_plan,
-  full_name=excluded.full_name,phone=excluded.phone,status='pending',created_at=now(),decided_at=null,decided_by=null
- where public.syndic_account_requests.status='rejected';
- if not found then raise exception 'Request already exists'; end if;
- insert into public.syndic_inbox(user_id,title,link,dedupe_key)
- select a.user_id,'Nouveau compte syndic à approuver : '||trim(organization),'/admin','account:'||auth.uid()||':'||now()
- from public.syndic_platform_admins a on conflict do nothing;
-end;$$;
+create table public.syndic_residence_members (
+ residence_id uuid not null references public.syndic_residences(id),
+ user_id uuid not null references auth.users(id),
+ status text not null default 'pending' check(status in ('pending','approved','rejected')),
+ full_name text not null default '' check(char_length(full_name)<=160),
+ phone text not null default '' check(char_length(phone)<=24),
+ requested_apartment text not null default '' check(char_length(requested_apartment)<=60),
+ link_id uuid references public.syndic_residence_links(id),
+ blocked_at timestamptz,
+ created_at timestamptz not null default now(), decided_at timestamptz, decided_by uuid references auth.users(id),
+ primary key(residence_id,user_id)
+);
+create index syndic_residence_members_user_idx on public.syndic_residence_members(user_id);
+alter table public.syndic_residence_members enable row level security;
+revoke all on public.syndic_residence_members from anon,authenticated;
+grant select on public.syndic_residence_members to authenticated;
+create policy syndic_residence_member_read on public.syndic_residence_members for select to authenticated
+ using(user_id=auth.uid() or public.syndic_manages_residence(residence_id));
 
-create function public.syndic_admin_decide_account(target uuid,approve boolean) returns uuid
-language plpgsql security definer set search_path='' as $$
-declare req public.syndic_account_requests; oid uuid; rec jsonb;
-begin
- if not public.syndic_is_platform_admin() then raise exception 'Forbidden'; end if;
- select * into req from public.syndic_account_requests where user_id=target for update;
- if not found or req.status<>'pending' then raise exception 'No pending request'; end if;
- if not approve then
-  update public.syndic_account_requests set status='rejected',decided_at=now(),decided_by=auth.uid() where user_id=target;
-  return null;
- end if;
- insert into public.syndic_organizations(name,created_by) values(req.organization_name,target) returning id into oid;
- insert into public.syndic_organization_members(organization_id,user_id,role) values(oid,target,'admin');
- insert into public.syndic_subscription_records(organization_id,plan,status,ends_at,note,updated_by)
- values(oid,'essai','trialing',now()+interval '1 month','Essai gratuit d''un mois (compte approuvé)',auth.uid());
- select to_jsonb(s) into rec from public.syndic_subscription_records s where organization_id=oid;
- insert into public.syndic_subscription_history(organization_id,actor_id,previous_value,new_value) values(oid,auth.uid(),null,rec);
- update public.syndic_account_requests set status='approved',organization_id=oid,decided_at=now(),decided_by=auth.uid() where user_id=target;
- insert into public.syndic_inbox(user_id,title,link,dedupe_key) values(target,'Votre compte syndic est approuvé : essai gratuit d''un mois','/app/abonnement','account-approved:'||oid);
- return oid;
-end;$$;
+-- Existing residents (apartment access) become approved members of their residence.
+insert into public.syndic_residence_members(residence_id,user_id,status,full_name,phone,decided_at)
+select distinct on (u.residence_id,a.user_id) u.residence_id,a.user_id,'approved',
+ left(trim(coalesce(au.raw_user_meta_data->>'first_name','')||' '||coalesce(au.raw_user_meta_data->>'last_name','')),160),
+ left(coalesce(au.raw_user_meta_data->>'phone',''),24),now()
+from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id join auth.users au on au.id=a.user_id
+where a.revoked_at is null or a.blocked_at is not null
+on conflict do nothing;
+update public.syndic_residence_members m set blocked_at=now() where exists(
+ select 1 from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id
+ where u.residence_id=m.residence_id and a.user_id=m.user_id and a.blocked_at is not null)
+ and not exists(select 1 from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id
+ where u.residence_id=m.residence_id and a.user_id=m.user_id and a.revoked_at is null);
 
--- Account overview used for redirects after sign-in.
-create function public.syndic_my_status() returns jsonb language sql stable security definer set search_path='' as $$
+-- Access: approved, non-blocked members reach their residence (announcements, meetings) even without an apartment.
+create or replace function public.syndic_can_access_residence(target uuid) returns boolean language sql stable security definer set search_path='' as $$
+ select exists(select 1 from public.syndic_residences r where r.id=target and public.syndic_org_active(r.organization_id))
+  and (public.syndic_manages_residence(target)
+   or exists(select 1 from public.syndic_residence_members m where m.residence_id=target and m.user_id=auth.uid() and m.status='approved' and m.blocked_at is null)
+   or exists(select 1 from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id where u.residence_id=target and a.user_id=auth.uid() and a.revoked_at is null));
+$$;
+create or replace function public.syndic_my_resident_space() returns jsonb language sql stable security definer set search_path='' as $$
+ select jsonb_build_object(
+ 'units',coalesce((select jsonb_agg(jsonb_build_object('id',u.id,'label',u.label,'residence',r.name,'residence_id',r.id,'city',r.city)) from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id join public.syndic_residences r on r.id=u.residence_id where a.user_id=auth.uid() and a.revoked_at is null and public.syndic_org_active(r.organization_id)),'[]'::jsonb),
+ 'residences',coalesce((select jsonb_agg(jsonb_build_object('id',r.id,'name',r.name,'city',r.city,'syndic',o.name)) from public.syndic_residence_members m join public.syndic_residences r on r.id=m.residence_id join public.syndic_organizations o on o.id=r.organization_id where m.user_id=auth.uid() and m.status='approved' and m.blocked_at is null and public.syndic_org_active(r.organization_id)),'[]'::jsonb),
+ 'posts',coalesce((select jsonb_agg(jsonb_build_object('id',p.id,'title',p.title,'body',p.body,'created_at',p.created_at,'residence_id',p.residence_id) order by p.created_at desc) from public.syndic_residence_posts p where public.syndic_can_access_residence(p.residence_id) and not public.syndic_manages_residence(p.residence_id)),'[]'::jsonb));
+$$;
+create or replace function public.syndic_my_status() returns jsonb language sql stable security definer set search_path='' as $$
  select jsonb_build_object(
   'admin',public.syndic_is_platform_admin(),
   'member',exists(select 1 from public.syndic_organization_members where user_id=auth.uid()),
-  'resident',exists(select 1 from public.syndic_resident_access where user_id=auth.uid() and revoked_at is null),
+  'resident',exists(select 1 from public.syndic_resident_access where user_id=auth.uid() and revoked_at is null)
+   or exists(select 1 from public.syndic_residence_members where user_id=auth.uid() and status='approved' and blocked_at is null),
   'request',(select status from public.syndic_account_requests where user_id=auth.uid()));
 $$;
-
--- 2. Bank details shown to syndics (edited by the platform admin) -----------------------------
-create table public.syndic_billing_settings (
- id boolean primary key default true check(id),
- account_holder text not null default '' check(char_length(account_holder)<=160),
- bank_name text not null default '' check(char_length(bank_name)<=160),
- rib text not null default '' check(char_length(rib)<=64),
- instructions text not null default '' check(char_length(instructions)<=1000),
- updated_at timestamptz not null default now()
-);
-insert into public.syndic_billing_settings(id) values(true);
-alter table public.syndic_billing_settings enable row level security;
-revoke all on public.syndic_billing_settings from anon,authenticated;
-grant select on public.syndic_billing_settings to authenticated;
-create policy syndic_billing_read on public.syndic_billing_settings for select to authenticated using(true);
-create function public.syndic_admin_set_billing(holder text,bank text,account_rib text,notes text) returns void
-language plpgsql security definer set search_path='' as $$
-begin
- if not public.syndic_is_platform_admin() then raise exception 'Forbidden'; end if;
- update public.syndic_billing_settings set account_holder=trim(holder),bank_name=trim(bank),rib=trim(account_rib),instructions=trim(notes),updated_at=now() where id;
-end;$$;
-
--- 3. Subscription payments by bank transfer, validated by the platform admin -------------------
-create table public.syndic_subscription_payments (
- id uuid primary key default gen_random_uuid(),
- organization_id uuid not null references public.syndic_organizations(id),
- plan text not null check(plan in ('standard','entreprise')),
- months integer not null check(months between 1 and 24),
- amount_cents bigint not null check(amount_cents>0 and amount_cents<=100000000),
- reference text not null default '' check(char_length(reference)<=160),
- proof_path text not null check(char_length(proof_path) between 5 and 300),
- submitted_by uuid not null references auth.users(id),
- status text not null default 'pending' check(status in ('pending','approved','rejected')),
- admin_note text not null default '' check(char_length(admin_note)<=500),
- created_at timestamptz not null default now(),
- reviewed_at timestamptz, reviewed_by uuid references auth.users(id)
-);
-create index syndic_sub_payments_org_idx on public.syndic_subscription_payments(organization_id,created_at);
-alter table public.syndic_subscription_payments enable row level security;
-revoke all on public.syndic_subscription_payments from anon,authenticated;
-grant select on public.syndic_subscription_payments to authenticated;
-create policy syndic_sub_payment_read on public.syndic_subscription_payments for select to authenticated
- using(public.syndic_is_platform_admin() or exists(select 1 from public.syndic_organization_members m where m.organization_id=syndic_subscription_payments.organization_id and m.user_id=auth.uid()));
-
-create function public.syndic_submit_subscription_payment(target_org uuid,plan_choice text,month_count integer,paid_cents bigint,payment_reference text,proof text) returns uuid
-language plpgsql security definer set search_path='' as $$
-declare pid uuid; org_name text;
-begin
- if not exists(select 1 from public.syndic_organization_members where organization_id=target_org and user_id=auth.uid() and role in ('admin','manager')) then raise exception 'Forbidden'; end if;
- if proof is null or left(proof,char_length(target_org::text)+1)<>target_org::text||'/' then raise exception 'Invalid proof'; end if;
- if plan_choice='standard' and paid_cents<>3000*month_count then raise exception 'Invalid amount'; end if;
- if (select count(*) from public.syndic_subscription_payments where organization_id=target_org and status='pending')>=3 then raise exception 'Too many pending payments'; end if;
- insert into public.syndic_subscription_payments(organization_id,plan,months,amount_cents,reference,proof_path,submitted_by)
- values(target_org,plan_choice,month_count,paid_cents,trim(coalesce(payment_reference,'')),proof,auth.uid()) returning id into pid;
- select name into org_name from public.syndic_organizations where id=target_org;
- insert into public.syndic_inbox(user_id,title,link,dedupe_key)
- select a.user_id,'Nouveau virement à vérifier : '||org_name,'/admin','payment-submitted:'||pid from public.syndic_platform_admins a;
- return pid;
-end;$$;
-
-create function public.syndic_admin_review_payment(target uuid,approve boolean,note text) returns void
-language plpgsql security definer set search_path='' as $$
-declare p public.syndic_subscription_payments; old_record jsonb; new_record jsonb; base timestamptz;
-begin
- if not public.syndic_is_platform_admin() then raise exception 'Forbidden'; end if;
- select * into p from public.syndic_subscription_payments where id=target for update;
- if not found or p.status<>'pending' then raise exception 'Payment already reviewed'; end if;
- update public.syndic_subscription_payments set status=case when approve then 'approved' else 'rejected' end,
-  admin_note=trim(coalesce(note,'')),reviewed_at=now(),reviewed_by=auth.uid() where id=target;
- if approve then
-  perform 1 from public.syndic_organizations where id=p.organization_id for update;
-  select to_jsonb(s) into old_record from public.syndic_subscription_records s where organization_id=p.organization_id;
-  select greatest(now(),coalesce((select ends_at from public.syndic_subscription_records where organization_id=p.organization_id and status in ('active','trialing')),now())) into base;
-  insert into public.syndic_subscription_records(organization_id,plan,status,ends_at,note,updated_by)
-  values(p.organization_id,p.plan,'active',base+make_interval(months=>p.months),'Virement validé (paiement '||p.id||')',auth.uid())
-  on conflict(organization_id) do update set plan=excluded.plan,status=excluded.status,ends_at=excluded.ends_at,note=excluded.note,updated_by=excluded.updated_by,updated_at=now();
-  select to_jsonb(s) into new_record from public.syndic_subscription_records s where organization_id=p.organization_id;
-  insert into public.syndic_subscription_history(organization_id,actor_id,previous_value,new_value) values(p.organization_id,auth.uid(),old_record,new_record);
- end if;
- insert into public.syndic_inbox(user_id,title,link,dedupe_key)
- select m.user_id,case when approve then 'Paiement validé : abonnement prolongé' else 'Paiement refusé : contactez le support' end,'/app/abonnement','payment-review:'||p.id
- from public.syndic_organization_members m where m.organization_id=p.organization_id and m.role in ('admin','manager') on conflict do nothing;
-end;$$;
-
--- 4. Join requests: a link (new or existing account) creates a request the syndic approves ------
-create table public.syndic_join_requests (
- id uuid primary key default gen_random_uuid(),
- link_id uuid not null unique references public.syndic_join_links(id),
- unit_id uuid not null references public.syndic_units(id),
- user_id uuid not null references auth.users(id),
- status text not null default 'pending' check(status in ('pending','approved','rejected')),
- invitation_id uuid references public.syndic_resident_invitations(id),
- created_at timestamptz not null default now(), decided_at timestamptz, decided_by uuid references auth.users(id)
-);
-alter table public.syndic_join_requests enable row level security;
-revoke all on public.syndic_join_requests from anon,authenticated;
-grant select on public.syndic_join_requests to authenticated;
-create policy syndic_join_request_read on public.syndic_join_requests for select to authenticated
- using(user_id=auth.uid() or exists(select 1 from public.syndic_units u where u.id=unit_id and public.syndic_manages_residence(u.residence_id)));
-
--- Internal helper: consume a valid link for an account and create the pending request.
-create function public.syndic_link_to_request(token uuid,attempt uuid,account_id uuid) returns uuid
-language plpgsql security definer set search_path='' as $$
-declare link public.syndic_join_links; rid uuid; residence uuid;
-begin
- select * into link from public.syndic_join_links where id=token for update;
- if not found or link.used_by is not null or link.revoked_at is not null or link.expires_at<=now() then raise exception 'Invalid invitation'; end if;
- if attempt is null and link.reserved_until is not null and link.reserved_until>now() then raise exception 'Invitation in use'; end if;
- if attempt is not null and (link.reservation is distinct from attempt or link.reserved_until<=now()) then raise exception 'Invalid invitation'; end if;
- if exists(select 1 from public.syndic_resident_access where unit_id=link.unit_id and user_id=account_id and revoked_at is null) then raise exception 'Already a resident'; end if;
- insert into public.syndic_join_requests(link_id,unit_id,user_id) values(token,link.unit_id,account_id) returning id into rid;
- update public.syndic_join_links set used_by=account_id,reservation=null,reserved_until=null where id=token;
- select residence_id into residence from public.syndic_units where id=link.unit_id;
- insert into public.syndic_inbox(user_id,title,link,dedupe_key)
- select m.user_id,'Nouvelle demande d''adhésion à valider','/app/communaute','join-request:'||rid
- from public.syndic_organization_members m join public.syndic_residences r on r.organization_id=m.organization_id
- where r.id=residence and m.role in ('admin','manager');
- return rid;
-end;$$;
--- Server (service role) path: new account created through the Auth API after reserving the link.
-create function public.syndic_request_join_link(token uuid,attempt uuid,account_id uuid) returns uuid
-language sql security definer set search_path='' as $$ select public.syndic_link_to_request(token,attempt,account_id); $$;
--- Signed-in path: an existing account joins with the link.
-create function public.syndic_request_join(token uuid) returns uuid
-language plpgsql security definer set search_path='' as $$
-begin
- if auth.uid() is null then raise exception 'Authentication required'; end if;
- return public.syndic_link_to_request(token,null,auth.uid());
-end;$$;
-
-create function public.syndic_decide_join_request(target uuid,approve boolean) returns void
-language plpgsql security definer set search_path='' as $$
-declare req public.syndic_join_requests; residence uuid; mail text; invitation uuid;
-begin
- select * into req from public.syndic_join_requests where id=target for update;
- if not found then raise exception 'Unknown request'; end if;
- select residence_id into residence from public.syndic_units where id=req.unit_id;
- if not public.syndic_manages_residence(residence) then raise exception 'Forbidden'; end if;
- if req.status<>'pending' then raise exception 'Already decided'; end if;
- if approve then
-  select lower(email) into mail from auth.users where id=req.user_id;
-  insert into public.syndic_resident_invitations(unit_id,email,invited_by,accepted_at) values(req.unit_id,coalesce(mail,'inconnu@invalid'),auth.uid(),now()) returning id into invitation;
-  insert into public.syndic_resident_access(unit_id,user_id,invitation_id) values(req.unit_id,req.user_id,invitation)
-  on conflict(unit_id,user_id) do update set invitation_id=excluded.invitation_id,revoked_at=null,blocked_at=null;
-  update public.syndic_join_links set invitation_id=invitation where id=req.link_id;
- end if;
- update public.syndic_join_requests set status=case when approve then 'approved' else 'rejected' end,invitation_id=invitation,decided_at=now(),decided_by=auth.uid() where id=target;
- insert into public.syndic_inbox(user_id,unit_id,title,link,dedupe_key)
- values(req.user_id,case when approve then req.unit_id end,case when approve then 'Votre demande d''adhésion est acceptée' else 'Votre demande d''adhésion a été refusée' end,'/resident','join-decision:'||req.id);
-end;$$;
-
--- 5. Resident moderation: block / unblock / remove -------------------------------------------
-alter table public.syndic_resident_access add column blocked_at timestamptz;
-create function public.syndic_set_resident_blocked(target_unit uuid,target_user uuid,blocked boolean) returns void
-language plpgsql security definer set search_path='' as $$
-declare residence uuid;
-begin
- select residence_id into residence from public.syndic_units where id=target_unit;
- if not public.syndic_manages_residence(residence) then raise exception 'Forbidden'; end if;
- if blocked then
-  update public.syndic_resident_access set blocked_at=now(),revoked_at=now() where unit_id=target_unit and user_id=target_user and revoked_at is null;
- else
-  update public.syndic_resident_access set blocked_at=null,revoked_at=null where unit_id=target_unit and user_id=target_user and blocked_at is not null;
- end if;
- if not found then raise exception 'Nothing to update'; end if;
-end;$$;
-create function public.syndic_remove_resident(target_unit uuid,target_user uuid) returns void
-language plpgsql security definer set search_path='' as $$
-declare residence uuid; inv uuid;
-begin
- select residence_id into residence from public.syndic_units where id=target_unit;
- if not public.syndic_manages_residence(residence) then raise exception 'Forbidden'; end if;
- delete from public.syndic_resident_access where unit_id=target_unit and user_id=target_user returning invitation_id into inv;
- if not found then raise exception 'Unknown resident'; end if;
- update public.syndic_resident_invitations set revoked_at=coalesce(revoked_at,now()) where id=inv;
-end;$$;
-
--- People overview for syndics (residents + pending requests) with contact details from Auth.
-create function public.syndic_manager_people() returns jsonb language sql stable security definer set search_path='' as $$
- select jsonb_build_object(
- 'residents',coalesce((select jsonb_agg(jsonb_build_object('unit_id',a.unit_id,'user_id',a.user_id,'residence_id',r.id,'unit',u.label,'residence',r.name,
-   'email',au.email,'name',trim(coalesce(au.raw_user_meta_data->>'first_name','')||' '||coalesce(au.raw_user_meta_data->>'last_name','')),
-   'phone',coalesce(au.raw_user_meta_data->>'phone',''),'blocked',a.blocked_at is not null,'revoked',a.revoked_at is not null,'since',a.created_at) order by r.name,u.label)
-  from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id join public.syndic_residences r on r.id=u.residence_id join auth.users au on au.id=a.user_id
-  where public.syndic_manages_residence(r.id)),'[]'::jsonb),
- 'requests',coalesce((select jsonb_agg(jsonb_build_object('id',q.id,'unit_id',q.unit_id,'residence_id',r.id,'unit',u.label,'residence',r.name,'email',au.email,
-   'name',trim(coalesce(au.raw_user_meta_data->>'first_name','')||' '||coalesce(au.raw_user_meta_data->>'last_name','')),
-   'phone',coalesce(au.raw_user_meta_data->>'phone',''),'created_at',q.created_at) order by q.created_at)
-  from public.syndic_join_requests q join public.syndic_units u on u.id=q.unit_id join public.syndic_residences r on r.id=u.residence_id join auth.users au on au.id=q.user_id
-  where q.status='pending' and public.syndic_manages_residence(r.id)),'[]'::jsonb));
-$$;
-
--- My pending join requests (resident side).
-create function public.syndic_my_join_requests() returns jsonb language sql stable security definer set search_path='' as $$
- select coalesce(jsonb_agg(jsonb_build_object('id',q.id,'status',q.status,'unit',u.label,'residence',r.name,'created_at',q.created_at) order by q.created_at desc),'[]'::jsonb)
- from public.syndic_join_requests q join public.syndic_units u on u.id=q.unit_id join public.syndic_residences r on r.id=u.residence_id where q.user_id=auth.uid();
-$$;
-
-revoke all on function public.syndic_request_syndic_account(text,text,text,text),public.syndic_admin_decide_account(uuid,boolean),public.syndic_my_status(),
- public.syndic_admin_set_billing(text,text,text,text),public.syndic_submit_subscription_payment(uuid,text,integer,bigint,text,text),public.syndic_admin_review_payment(uuid,boolean,text),
- public.syndic_request_join(uuid),public.syndic_decide_join_request(uuid,boolean),public.syndic_set_resident_blocked(uuid,uuid,boolean),public.syndic_remove_resident(uuid,uuid),
- public.syndic_manager_people(),public.syndic_my_join_requests() from public,anon;
-grant execute on function public.syndic_request_syndic_account(text,text,text,text),public.syndic_admin_decide_account(uuid,boolean),public.syndic_my_status(),
- public.syndic_admin_set_billing(text,text,text,text),public.syndic_submit_subscription_payment(uuid,text,integer,bigint,text,text),public.syndic_admin_review_payment(uuid,boolean,text),
- public.syndic_request_join(uuid),public.syndic_decide_join_request(uuid,boolean),public.syndic_set_resident_blocked(uuid,uuid,boolean),public.syndic_remove_resident(uuid,uuid),
- public.syndic_manager_people(),public.syndic_my_join_requests() to authenticated;
-revoke all on function public.syndic_link_to_request(uuid,uuid,uuid),public.syndic_request_join_link(uuid,uuid,uuid) from public,anon,authenticated;
-grant execute on function public.syndic_request_join_link(uuid,uuid,uuid) to service_role;
-
--- Private bucket for transfer screenshots (uploads and signed URLs go through the server only).
-do $$ begin
- if exists(select 1 from pg_namespace where nspname='storage') then
-  insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
-  values('syndic-payment-proofs','syndic-payment-proofs',false,5242880,array['image/png','image/jpeg','image/webp','application/pdf'])
-  on conflict(id) do nothing;
- end if;
-end $$;
--- ===== 202611110002_subscription_enforcement
--- Automatic restriction: when a syndic subscription (trial included) is over, the syndic loses management
--- rights and the residents of that space lose access, until a payment is validated.
-create function public.syndic_org_active(target uuid) returns boolean language sql stable security definer set search_path='' as $$
- select exists(select 1 from public.syndic_subscription_records s where s.organization_id=target and s.status in ('active','trialing') and s.ends_at>now());
-$$;
-create or replace function public.syndic_manages_residence(target uuid) returns boolean language sql stable security definer set search_path='' as $$
- select exists(select 1 from public.syndic_residences r join public.syndic_organization_members m on m.organization_id=r.organization_id
-  where r.id=target and m.user_id=auth.uid() and m.role in ('admin','manager') and public.syndic_org_active(r.organization_id));
-$$;
-create or replace function public.syndic_can_access_unit(target uuid) returns boolean language sql stable security definer set search_path='' as $$
- select exists(select 1 from public.syndic_units u join public.syndic_residences r on r.id=u.residence_id where u.id=target and public.syndic_org_active(r.organization_id)
-  and (public.syndic_manages_residence(u.residence_id) or exists(select 1 from public.syndic_resident_access a where a.unit_id=u.id and a.user_id=auth.uid() and a.revoked_at is null)));
-$$;
-create or replace function public.syndic_can_access_residence(target uuid) returns boolean language sql stable security definer set search_path='' as $$
- select exists(select 1 from public.syndic_residences r where r.id=target and public.syndic_org_active(r.organization_id))
-  and (public.syndic_manages_residence(target) or exists(select 1 from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id where u.residence_id=target and a.user_id=auth.uid() and a.revoked_at is null));
-$$;
-create or replace function public.syndic_my_resident_space() returns jsonb language sql stable security definer set search_path='' as $$
- select jsonb_build_object('units',coalesce((select jsonb_agg(jsonb_build_object('id',u.id,'label',u.label,'residence',r.name,'residence_id',r.id,'city',r.city)) from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id join public.syndic_residences r on r.id=u.residence_id where a.user_id=auth.uid() and a.revoked_at is null and public.syndic_org_active(r.organization_id)),'[]'::jsonb),
- 'posts',coalesce((select jsonb_agg(jsonb_build_object('id',p.id,'title',p.title,'body',p.body,'created_at',p.created_at,'residence_id',p.residence_id) order by p.created_at desc) from public.syndic_residence_posts p join public.syndic_residences r on r.id=p.residence_id where public.syndic_org_active(r.organization_id) and exists(select 1 from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id where a.user_id=auth.uid() and a.revoked_at is null and u.residence_id=p.residence_id)),'[]'::jsonb));
-$$;
-drop policy syndic_posts_read on public.syndic_residence_posts;
-create policy syndic_posts_read on public.syndic_residence_posts for select to authenticated using(public.syndic_can_access_residence(residence_id));
-drop policy syndic_residence_create on public.syndic_residences;
-create policy syndic_residence_create on public.syndic_residences for insert to authenticated with check(public.syndic_org_active(organization_id) and exists(select 1 from public.syndic_organization_members m where m.organization_id=syndic_residences.organization_id and m.user_id=(select auth.uid()) and m.role in ('admin','manager')));
-drop policy syndic_unit_create on public.syndic_units;
-create policy syndic_unit_create on public.syndic_units for insert to authenticated with check(public.syndic_manages_residence(residence_id));
--- Spaces the caller belongs to (as syndic or resident) whose subscription is over.
-create function public.syndic_my_suspended_spaces() returns jsonb language sql stable security definer set search_path='' as $$
+create or replace function public.syndic_my_suspended_spaces() returns jsonb language sql stable security definer set search_path='' as $$
  select coalesce(jsonb_agg(distinct r.name),'[]'::jsonb) from public.syndic_residences r
  where not public.syndic_org_active(r.organization_id) and (
   exists(select 1 from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id where u.residence_id=r.id and a.user_id=auth.uid() and a.revoked_at is null)
+  or exists(select 1 from public.syndic_residence_members m where m.residence_id=r.id and m.user_id=auth.uid() and m.status='approved' and m.blocked_at is null)
   or exists(select 1 from public.syndic_organization_members m where m.organization_id=r.organization_id and m.user_id=auth.uid()));
 $$;
--- Syndic accounts created by the admin also start with the one-month free trial.
-create or replace function public.syndic_provision_organization(account_id uuid,organization_name text) returns uuid language plpgsql security definer set search_path='' as $$
-declare oid uuid;
+
+-- Links.
+create function public.syndic_create_residence_link(target_residence uuid) returns uuid language plpgsql security definer set search_path='' as $$
+declare result uuid;
 begin
- insert into public.syndic_organizations(name,created_by) values(trim(organization_name),account_id) returning id into oid;
- insert into public.syndic_organization_members(organization_id,user_id,role) values(oid,account_id,'admin');
- insert into public.syndic_subscription_records(organization_id,plan,status,ends_at,note,updated_by)
- values(oid,'essai','trialing',now()+interval '1 month','Essai gratuit d''un mois (compte créé par l''administrateur)',account_id);
- return oid;
+ if not public.syndic_manages_residence(target_residence) then raise exception 'Forbidden'; end if;
+ if (select count(*) from public.syndic_residence_links where created_by=auth.uid() and created_at>now()-interval '1 hour')>=30 then raise exception 'Too many links'; end if;
+ insert into public.syndic_residence_links(residence_id,created_by) values(target_residence,auth.uid()) returning id into result;
+ return result;
 end;$$;
-revoke all on function public.syndic_org_active(uuid),public.syndic_my_suspended_spaces() from public,anon;
-grant execute on function public.syndic_org_active(uuid),public.syndic_my_suspended_spaces() to authenticated;
--- ===== 202611120001_admin_overview
--- Structured read-only overview for platform administrators.
-create function public.syndic_admin_overview() returns jsonb language plpgsql stable security definer set search_path='' as $$
+create function public.syndic_revoke_residence_link(token uuid) returns void language plpgsql security definer set search_path='' as $$
+declare residence uuid;
+begin
+ select residence_id into residence from public.syndic_residence_links where id=token;
+ if not public.syndic_manages_residence(residence) then raise exception 'Forbidden'; end if;
+ update public.syndic_residence_links set revoked_at=coalesce(revoked_at,now()) where id=token;
+end;$$;
+-- Public: only the residence and syndic names of a valid link.
+create function public.syndic_residence_link_info(token uuid) returns jsonb language sql stable security definer set search_path='' as $$
+ select jsonb_build_object('residence',r.name,'city',r.city,'syndic',o.name) from public.syndic_residence_links l
+ join public.syndic_residences r on r.id=l.residence_id join public.syndic_organizations o on o.id=r.organization_id
+ where l.id=token and l.revoked_at is null and l.expires_at>now() and public.syndic_org_active(r.organization_id);
+$$;
+
+-- Join requests (new or existing account).
+create function public.syndic_add_member_request(token uuid,account_id uuid,member_name text,member_phone text,apartment text) returns uuid
+language plpgsql security definer set search_path='' as $$
+declare link public.syndic_residence_links; existing public.syndic_residence_members;
+begin
+ select * into link from public.syndic_residence_links where id=token;
+ if not found or link.revoked_at is not null or link.expires_at<=now() then raise exception 'Invalid invitation'; end if;
+ select * into existing from public.syndic_residence_members where residence_id=link.residence_id and user_id=account_id for update;
+ if found and existing.status in ('pending','approved') then raise exception 'Already requested'; end if;
+ insert into public.syndic_residence_members(residence_id,user_id,full_name,phone,requested_apartment,link_id)
+ values(link.residence_id,account_id,left(trim(coalesce(member_name,'')),160),left(trim(coalesce(member_phone,'')),24),left(trim(coalesce(apartment,'')),60),token)
+ on conflict(residence_id,user_id) do update set status='pending',full_name=excluded.full_name,phone=excluded.phone,
+  requested_apartment=excluded.requested_apartment,link_id=excluded.link_id,created_at=now(),decided_at=null,decided_by=null,blocked_at=null;
+ insert into public.syndic_inbox(user_id,title,link,dedupe_key)
+ select m.user_id,'Nouvelle demande d''adhésion à valider','/app/communaute','member-request:'||link.residence_id||':'||account_id||':'||now()
+ from public.syndic_organization_members m join public.syndic_residences r on r.organization_id=m.organization_id
+ where r.id=link.residence_id and m.role in ('admin','manager') on conflict do nothing;
+ return link.residence_id;
+end;$$;
+create function public.syndic_request_residence_join(token uuid,account_id uuid,member_name text,member_phone text,apartment text) returns uuid
+language sql security definer set search_path='' as $$ select public.syndic_add_member_request(token,account_id,member_name,member_phone,apartment); $$;
+create function public.syndic_join_residence(token uuid,member_name text,member_phone text,apartment text) returns uuid
+language plpgsql security definer set search_path='' as $$
+begin
+ if auth.uid() is null then raise exception 'Authentication required'; end if;
+ return public.syndic_add_member_request(token,auth.uid(),member_name,member_phone,apartment);
+end;$$;
+
+-- Internal: give a member access to an apartment of the residence (created if needed).
+create function public.syndic_assign_apartment(target_residence uuid,target_user uuid,apartment text) returns void
+language plpgsql security definer set search_path='' as $$
+declare unit uuid; mail text; invitation uuid; apt text:=trim(apartment);
+begin
+ if char_length(apt) not between 1 and 60 then raise exception 'Invalid apartment'; end if;
+ select u.id into unit from public.syndic_units u where u.residence_id=target_residence and lower(u.label)=lower(apt) limit 1;
+ if unit is null then
+  insert into public.syndic_units(residence_id,label,kind,share) values(target_residence,apt,'apartment',1) returning id into unit;
+ end if;
+ if exists(select 1 from public.syndic_resident_access where unit_id=unit and user_id=target_user and revoked_at is null) then return; end if;
+ select lower(email) into mail from auth.users where id=target_user;
+ insert into public.syndic_resident_invitations(unit_id,email,invited_by,accepted_at) values(unit,coalesce(mail,'inconnu@invalid'),auth.uid(),now()) returning id into invitation;
+ insert into public.syndic_resident_access(unit_id,user_id,invitation_id) values(unit,target_user,invitation)
+ on conflict(unit_id,user_id) do update set invitation_id=excluded.invitation_id,revoked_at=null,blocked_at=null;
+end;$$;
+
+create function public.syndic_decide_member(target_residence uuid,target_user uuid,approve boolean) returns void
+language plpgsql security definer set search_path='' as $$
+declare m public.syndic_residence_members;
+begin
+ if not public.syndic_manages_residence(target_residence) then raise exception 'Forbidden'; end if;
+ select * into m from public.syndic_residence_members where residence_id=target_residence and user_id=target_user for update;
+ if not found or m.status<>'pending' then raise exception 'No pending request'; end if;
+ update public.syndic_residence_members set status=case when approve then 'approved' else 'rejected' end,decided_at=now(),decided_by=auth.uid()
+ where residence_id=target_residence and user_id=target_user;
+ if approve and m.requested_apartment<>'' then perform public.syndic_assign_apartment(target_residence,target_user,m.requested_apartment); end if;
+ insert into public.syndic_inbox(user_id,title,link,dedupe_key)
+ values(target_user,case when approve then 'Votre demande d''adhésion est acceptée' else 'Votre demande d''adhésion a été refusée' end,'/resident','member-decision:'||target_residence||':'||target_user||':'||now())
+ on conflict do nothing;
+end;$$;
+
+-- The syndic edits a member: name, phone and the list of apartments (may be empty).
+create function public.syndic_update_member(target_residence uuid,target_user uuid,member_name text,member_phone text,apartments text[]) returns void
+language plpgsql security definer set search_path='' as $$
+declare m public.syndic_residence_members; apt text; wanted text[];
+begin
+ if not public.syndic_manages_residence(target_residence) then raise exception 'Forbidden'; end if;
+ select * into m from public.syndic_residence_members where residence_id=target_residence and user_id=target_user for update;
+ if not found or m.status<>'approved' then raise exception 'Member must be approved'; end if;
+ if char_length(trim(coalesce(member_name,'')))>160 or char_length(trim(coalesce(member_phone,'')))>24 then raise exception 'Invalid details'; end if;
+ update public.syndic_residence_members set full_name=trim(coalesce(member_name,'')),phone=trim(coalesce(member_phone,'')) where residence_id=target_residence and user_id=target_user;
+ select coalesce(array_agg(distinct lower(trim(x))),'{}') into wanted from unnest(coalesce(apartments,'{}')) x where trim(x)<>'';
+ if cardinality(wanted)>50 then raise exception 'Too many apartments'; end if;
+ -- Remove apartments no longer listed.
+ update public.syndic_resident_access a set revoked_at=now() from public.syndic_units u
+ where u.id=a.unit_id and u.residence_id=target_residence and a.user_id=target_user and a.revoked_at is null and not (lower(u.label)=any(wanted));
+ if m.blocked_at is null then
+  foreach apt in array (select coalesce(array_agg(distinct trim(x)),'{}') from unnest(coalesce(apartments,'{}')) x where trim(x)<>'') loop
+   perform public.syndic_assign_apartment(target_residence,target_user,apt);
+  end loop;
+ end if;
+end;$$;
+
+create function public.syndic_set_member_blocked(target_residence uuid,target_user uuid,blocked boolean) returns void
+language plpgsql security definer set search_path='' as $$
+begin
+ if not public.syndic_manages_residence(target_residence) then raise exception 'Forbidden'; end if;
+ if blocked then
+  update public.syndic_residence_members set blocked_at=now() where residence_id=target_residence and user_id=target_user and status='approved' and blocked_at is null;
+  if not found then raise exception 'Nothing to update'; end if;
+  update public.syndic_resident_access a set blocked_at=now(),revoked_at=now() from public.syndic_units u
+  where u.id=a.unit_id and u.residence_id=target_residence and a.user_id=target_user and a.revoked_at is null;
+ else
+  update public.syndic_residence_members set blocked_at=null where residence_id=target_residence and user_id=target_user and blocked_at is not null;
+  if not found then raise exception 'Nothing to update'; end if;
+  update public.syndic_resident_access a set blocked_at=null,revoked_at=null from public.syndic_units u
+  where u.id=a.unit_id and u.residence_id=target_residence and a.user_id=target_user and a.blocked_at is not null;
+ end if;
+end;$$;
+
+create function public.syndic_remove_member(target_residence uuid,target_user uuid) returns void
+language plpgsql security definer set search_path='' as $$
+begin
+ if not public.syndic_manages_residence(target_residence) then raise exception 'Forbidden'; end if;
+ delete from public.syndic_residence_members where residence_id=target_residence and user_id=target_user;
+ if not found then raise exception 'Unknown member'; end if;
+ update public.syndic_resident_invitations i set revoked_at=coalesce(i.revoked_at,now()) from public.syndic_resident_access a, public.syndic_units u
+ where a.invitation_id=i.id and u.id=a.unit_id and u.residence_id=target_residence and a.user_id=target_user;
+ delete from public.syndic_resident_access a using public.syndic_units u where u.id=a.unit_id and u.residence_id=target_residence and a.user_id=target_user;
+end;$$;
+
+-- People of one residence for its syndic.
+create function public.syndic_residence_people(target_residence uuid) returns jsonb language plpgsql stable security definer set search_path='' as $$
+begin
+ if not public.syndic_manages_residence(target_residence) then raise exception 'Forbidden'; end if;
+ return coalesce((select jsonb_agg(jsonb_build_object('user_id',m.user_id,'email',au.email,'status',m.status,
+  'name',coalesce(nullif(m.full_name,''),trim(coalesce(au.raw_user_meta_data->>'first_name','')||' '||coalesce(au.raw_user_meta_data->>'last_name',''))),
+  'phone',coalesce(nullif(m.phone,''),au.raw_user_meta_data->>'phone',''),'requested_apartment',m.requested_apartment,'blocked',m.blocked_at is not null,'created_at',m.created_at,
+  'apartments',coalesce((select jsonb_agg(u.label order by u.label) from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id
+    where u.residence_id=m.residence_id and a.user_id=m.user_id and (a.revoked_at is null or a.blocked_at is not null)),'[]'::jsonb))
+  order by m.status desc,m.created_at)
+  from public.syndic_residence_members m join auth.users au on au.id=m.user_id where m.residence_id=target_residence and m.status<>'rejected'),'[]'::jsonb);
+end;$$;
+
+-- Resident side: my residence requests.
+create or replace function public.syndic_my_join_requests() returns jsonb language sql stable security definer set search_path='' as $$
+ select coalesce(jsonb_agg(x order by x->>'created_at' desc),'[]'::jsonb) from (
+  select jsonb_build_object('id',q.id,'status',q.status,'unit',u.label,'residence',r.name,'created_at',q.created_at) x
+  from public.syndic_join_requests q join public.syndic_units u on u.id=q.unit_id join public.syndic_residences r on r.id=u.residence_id where q.user_id=auth.uid()
+  union all
+  select jsonb_build_object('id',m.residence_id,'status',m.status,'unit',m.requested_apartment,'residence',r.name,'created_at',m.created_at)
+  from public.syndic_residence_members m join public.syndic_residences r on r.id=m.residence_id where m.user_id=auth.uid()) s;
+$$;
+
+-- Admin overview: residents come from residence memberships (with their apartments).
+create or replace function public.syndic_admin_overview() returns jsonb language plpgsql stable security definer set search_path='' as $$
 begin
  if not public.syndic_is_platform_admin() then raise exception 'Forbidden'; end if;
  return jsonb_build_object(
@@ -355,22 +246,34 @@ begin
    'plan',s.plan,'status',s.status,'ends_at',s.ends_at,'active',public.syndic_org_active(o.id),
    'residences',(select count(*) from public.syndic_residences r where r.organization_id=o.id),
    'units',(select count(*) from public.syndic_units u join public.syndic_residences r on r.id=u.residence_id where r.organization_id=o.id),
-   'residents',(select count(distinct a.user_id) from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id join public.syndic_residences r on r.id=u.residence_id where r.organization_id=o.id and a.revoked_at is null))
+   'residents',(select count(distinct m.user_id) from public.syndic_residence_members m join public.syndic_residences r on r.id=m.residence_id where r.organization_id=o.id and m.status='approved' and m.blocked_at is null))
    order by o.created_at desc)
   from public.syndic_organizations o left join public.syndic_subscription_records s on s.organization_id=o.id left join auth.users au on au.id=o.created_by),'[]'::jsonb),
  'residences',coalesce((select jsonb_agg(jsonb_build_object('id',r.id,'name',r.name,'city',r.city,'address',r.address,'syndic',o.name,
    'units',(select count(*) from public.syndic_units u where u.residence_id=r.id),
-   'residents',(select count(distinct a.user_id) from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id where u.residence_id=r.id and a.revoked_at is null))
+   'residents',(select count(*) from public.syndic_residence_members m where m.residence_id=r.id and m.status='approved' and m.blocked_at is null))
    order by o.name,r.name)
   from public.syndic_residences r join public.syndic_organizations o on o.id=r.organization_id),'[]'::jsonb),
  'residents',coalesce((select jsonb_agg(jsonb_build_object('email',au.email,
-   'name',trim(coalesce(au.raw_user_meta_data->>'first_name','')||' '||coalesce(au.raw_user_meta_data->>'last_name','')),
-   'phone',coalesce(au.raw_user_meta_data->>'phone',''),'unit',u.label,'residence',r.name,'syndic',o.name,
-   'state',case when a.blocked_at is not null then 'blocked' when a.revoked_at is not null then 'revoked' else 'active' end,'since',a.created_at)
-   order by o.name,r.name,u.label)
-  from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id join public.syndic_residences r on r.id=u.residence_id
-  join public.syndic_organizations o on o.id=r.organization_id join auth.users au on au.id=a.user_id),'[]'::jsonb));
+   'name',coalesce(nullif(m.full_name,''),trim(coalesce(au.raw_user_meta_data->>'first_name','')||' '||coalesce(au.raw_user_meta_data->>'last_name',''))),
+   'phone',coalesce(nullif(m.phone,''),au.raw_user_meta_data->>'phone',''),
+   'unit',coalesce((select string_agg(u.label,', ' order by u.label) from public.syndic_resident_access a join public.syndic_units u on u.id=a.unit_id where u.residence_id=r.id and a.user_id=m.user_id and a.revoked_at is null),''),
+   'residence',r.name,'syndic',o.name,
+   'state',case when m.status='pending' then 'pending' when m.blocked_at is not null then 'blocked' else 'active' end,'since',m.created_at)
+   order by o.name,r.name)
+  from public.syndic_residence_members m join public.syndic_residences r on r.id=m.residence_id
+  join public.syndic_organizations o on o.id=r.organization_id join auth.users au on au.id=m.user_id where m.status<>'rejected'),'[]'::jsonb));
 end;$$;
-revoke all on function public.syndic_admin_overview() from public,anon;
-grant execute on function public.syndic_admin_overview() to authenticated;
+
+revoke all on function public.syndic_create_residence_link(uuid),public.syndic_revoke_residence_link(uuid),public.syndic_join_residence(uuid,text,text,text),
+ public.syndic_decide_member(uuid,uuid,boolean),public.syndic_update_member(uuid,uuid,text,text,text[]),public.syndic_set_member_blocked(uuid,uuid,boolean),
+ public.syndic_remove_member(uuid,uuid),public.syndic_residence_people(uuid) from public,anon;
+grant execute on function public.syndic_create_residence_link(uuid),public.syndic_revoke_residence_link(uuid),public.syndic_join_residence(uuid,text,text,text),
+ public.syndic_decide_member(uuid,uuid,boolean),public.syndic_update_member(uuid,uuid,text,text,text[]),public.syndic_set_member_blocked(uuid,uuid,boolean),
+ public.syndic_remove_member(uuid,uuid),public.syndic_residence_people(uuid) to authenticated;
+revoke all on function public.syndic_add_member_request(uuid,uuid,text,text,text),public.syndic_assign_apartment(uuid,uuid,text),
+ public.syndic_request_residence_join(uuid,uuid,text,text,text) from public,anon,authenticated;
+grant execute on function public.syndic_request_residence_join(uuid,uuid,text,text,text) to service_role;
+revoke all on function public.syndic_residence_link_info(uuid) from public;
+grant execute on function public.syndic_residence_link_info(uuid) to anon,authenticated,service_role;
 commit;

@@ -781,5 +781,18 @@
   "Enregistrer les règlements": { "ar": "تسجيل الأداءات", "en": "Record payments" },
   "Montant total (DH)": { "ar": "المبلغ الإجمالي (درهم)", "en": "Total amount (MAD)" },
   "Répartir entre": { "ar": "التوزيع على", "en": "Split between" },
-  "Ajouter la dépense": { "ar": "إضافة المصروف", "en": "Add expense" }
+  "Ajouter la dépense": { "ar": "إضافة المصروف", "en": "Add expense" },
+  "Les invitations, demandes d’adhésion et habitants se gèrent dans chaque immeuble.": { "ar": "تتم إدارة الدعوات وطلبات الانضمام والسكان داخل كل عمارة.", "en": "Invitations, join requests and residents are managed in each building." },
+  "Lien d’invitation de la résidence": { "ar": "رابط دعوة الإقامة", "en": "Residence invitation link" },
+  "Un seul lien pour toute la résidence. Chaque habitant crée son compte (e-mail, mot de passe, nom, appartement facultatif), puis vous approuvez sa demande.": { "ar": "رابط واحد لكل الإقامة. ينشئ كل ساكن حسابه (البريد، كلمة المرور، الاسم، الشقة اختيارية)، ثم توافق على طلبه.", "en": "One link for the whole residence. Each resident creates their account (email, password, name, optional apartment), then you approve the request." },
+  "Valable jusqu’au": { "ar": "صالح حتى", "en": "Valid until" },
+  "Désactiver": { "ar": "تعطيل", "en": "Disable" },
+  "Créer le lien d’invitation": { "ar": "إنشاء رابط الدعوة", "en": "Create the invitation link" },
+  "Appartement indiqué": { "ar": "الشقة المذكورة", "en": "Apartment given" },
+  "Sans appartement": { "ar": "بدون شقة", "en": "No apartment" },
+  "Appartements (séparés par des virgules, facultatif)": { "ar": "الشقق (مفصولة بفواصل، اختياري)", "en": "Apartments (comma-separated, optional)" },
+  "Mes appartements": { "ar": "شققي", "en": "My apartments" },
+  "gérée par": { "ar": "يسيرها", "en": "managed by" },
+  "Appartement (facultatif)": { "ar": "الشقة (اختياري)", "en": "Apartment (optional)" },
+  "Créer mon compte et rejoindre": { "ar": "إنشاء حسابي والانضمام", "en": "Create my account and join" }
 }

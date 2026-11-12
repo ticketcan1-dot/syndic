@@ -510,5 +510,37 @@
   "Vérifiez le titre, le montant, la date et les appartements.": {
     "ar": "تحقق من العنوان والمبلغ والتاريخ والشقق.",
     "en": "Check the title, amount, date and apartments."
+  },
+  "Lien de la résidence créé : envoyez-le à tous vos habitants.": {
+    "ar": "تم إنشاء رابط الإقامة: أرسله إلى جميع السكان.",
+    "en": "Residence link created: send it to all your residents."
+  },
+  "Lien désactivé.": {
+    "ar": "تم تعطيل الرابط.",
+    "en": "Link disabled."
+  },
+  "Habitant approuvé. Vous pouvez modifier ses informations et ses appartements.": {
+    "ar": "تمت الموافقة على الساكن. يمكنك تعديل معلوماته وشققه.",
+    "en": "Resident approved. You can edit their details and apartments."
+  },
+  "Informations de l’habitant enregistrées.": {
+    "ar": "تم حفظ معلومات الساكن.",
+    "en": "Resident details saved."
+  },
+  "Modification refusée.": {
+    "ar": "تم رفض التعديل.",
+    "en": "Change refused."
+  },
+  "Vérifiez les informations de l’habitant.": {
+    "ar": "تحقق من معلومات الساكن.",
+    "en": "Check the resident's details."
+  },
+  "Un numéro d’appartement est trop long.": {
+    "ar": "رقم شقة طويل جداً.",
+    "en": "An apartment number is too long."
+  },
+  "Demande impossible : lien expiré, ou une demande est déjà en cours pour cette résidence.": {
+    "ar": "تعذر الطلب: الرابط منتهي أو يوجد طلب قيد المعالجة لهذه الإقامة.",
+    "en": "Request impossible: link expired, or a request is already pending for this residence."
   }
 }

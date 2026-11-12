@@ -8,10 +8,9 @@ import { Submit } from "@/components/submit";
 import { ShareLink } from "@/components/share-link";
 import { signedIn } from "@/lib/access";
 import { intlLocale as getIntlLocale } from "@/lib/locale-server";
-import { addApartment, inviteToApartment, addExpense, decideRequest, moderate } from "./actions";
+import { addApartment, addExpense, createResidenceLink, revokeResidenceLink, decideMember, updateMember, moderateMember } from "./actions";
 export const dynamic = "force-dynamic";
-type Person = { unit_id: string; user_id: string; residence_id: string; unit: string; email: string; name: string; phone: string; blocked: boolean; revoked: boolean };
-type Request = { id: string; unit_id: string; residence_id: string; unit: string; email: string; name: string; phone: string };
+type Member = { user_id: string; email: string; status: string; name: string; phone: string; requested_apartment: string; blocked: boolean; apartments: string[] };
 export default async function Page({
   params,
   searchParams,
@@ -29,16 +28,15 @@ export default async function Page({
   if (!residence) notFound();
   const [units, links, expenses, peopleResult] = await Promise.all([
     db.from("syndic_units").select("id,label").eq("residence_id", id).order("label"),
-    db.from("syndic_join_links").select("id,unit_id,expires_at,used_by,revoked_at").order("created_at", { ascending: false }),
+    db.from("syndic_residence_links").select("id,expires_at,revoked_at").eq("residence_id", id).is("revoked_at", null).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }),
     db.from("syndic_expense_entries").select("id,title,amount_cents,due_date,syndic_charge_entries(amount_cents,syndic_payment_entries(amount_cents))").eq("residence_id", id).order("due_date", { ascending: false }),
-    db.rpc("syndic_manager_people"),
+    db.rpc("syndic_residence_people", { target_residence: id }),
   ]);
   const unitList = units.data ?? [];
-  const unitIds = new Set(unitList.map((u) => u.id));
-  const people = (peopleResult.data ?? { residents: [], requests: [] }) as { residents: Person[]; requests: Request[] };
-  const residents = people.residents.filter((p) => p.residence_id === id);
-  const requests = people.requests.filter((p) => p.residence_id === id);
-  const openLinks = (links.data ?? []).filter((l) => unitIds.has(l.unit_id) && !l.used_by && !l.revoked_at && new Date(l.expires_at) > new Date());
+  const people = (peopleResult.data ?? []) as Member[];
+  const residents = people.filter((p) => p.status === "approved");
+  const requests = people.filter((p) => p.status === "pending");
+  const openLinks = links.data ?? [];
   const fmt = (c: number) => (c / 100).toLocaleString(intlLocale, { maximumFractionDigits: 2 }) + " DH";
   const tabs = [
     ["habitants", "Habitants"],
@@ -62,7 +60,7 @@ export default async function Page({
       <Notice message={query.message} error={Boolean(units.error || expenses.error || peopleResult.error)} />
       <div className="stats">
         <div className="card"><p><I18nText text="Appartements" /></p><div className="stat-number">{unitList.length}</div></div>
-        <div className="card"><p><I18nText text="Habitants" /></p><div className="stat-number">{residents.filter((r) => !r.revoked).length}</div></div>
+        <div className="card"><p><I18nText text="Habitants" /></p><div className="stat-number">{residents.filter((r) => !r.blocked).length}</div></div>
         <div className="card"><p><I18nText text="Demandes en attente" /></p><div className="stat-number">{requests.length}</div></div>
       </div>
       <nav className="residence-tabs" style={{ margin: "20px 0" }}>
@@ -75,42 +73,43 @@ export default async function Page({
       {tab === "habitants" && (
         <>
           <section className="card" style={{ marginBottom: 20 }}>
-            <h2><I18nText text="Inviter un habitant par lien" /></h2>
-            {unitList.length ? (
-              <form action={inviteToApartment} className="form">
-                {hidden}
-                <label>
-                  <I18nText text="Appartement" />
-                  <select name="unit_id">
-                    {unitList.map((u) => <option key={u.id} value={u.id}>{u.label}</option>)}
-                  </select>
-                </label>
-                <Submit><I18nText text="Créer un lien d’invitation" /></Submit>
-              </form>
-            ) : (
-              <p><Link className="text-link" href={`/app/residences/${id}?tab=appartements`}><I18nText text="Ajoutez d’abord un appartement." /></Link></p>
-            )}
+            <h2><I18nText text="Lien d’invitation de la résidence" /></h2>
+            <p className="small"><I18nText text="Un seul lien pour toute la résidence. Chaque habitant crée son compte (e-mail, mot de passe, nom, appartement facultatif), puis vous approuvez sa demande." /></p>
             {openLinks.map((l) => (
               <div key={l.id} className="list-row">
-                <strong>{unitList.find((u) => u.id === l.unit_id)?.label}</strong>
-                <ShareLink url={`${process.env.NEXT_PUBLIC_SITE_URL}/rejoindre/${l.id}`} />
+                <div>
+                  <ShareLink url={`${process.env.NEXT_PUBLIC_SITE_URL}/rejoindre/${l.id}`} />
+                  <p className="small"><I18nText text="Valable jusqu’au" /> {new Date(l.expires_at).toLocaleDateString(intlLocale)}</p>
+                </div>
+                <form action={revokeResidenceLink}>
+                  {hidden}
+                  <input type="hidden" name="token" value={l.id} />
+                  <Submit><I18nText text="Désactiver" /></Submit>
+                </form>
               </div>
             ))}
+            {!openLinks.length && (
+              <form action={createResidenceLink}>
+                {hidden}
+                <Submit><I18nText text="Créer le lien d’invitation" /></Submit>
+              </form>
+            )}
           </section>
           <section className="card" style={{ marginBottom: 20 }}>
             <h2><I18nText text="Demandes d’adhésion" /></h2>
             {!requests.length && <p><I18nText text="Aucune demande en attente." /></p>}
             {requests.map((r) => (
-              <article key={r.id} className="list-row">
+              <article key={r.user_id} className="list-row">
                 <div>
                   <strong>{r.name || r.email}</strong>
-                  <p className="small">{r.email} {r.phone ? "· " + r.phone : ""} · {r.unit}</p>
+                  <p className="small">{r.email} {r.phone ? "· " + r.phone : ""}</p>
+                  <p className="small"><I18nText text="Appartement indiqué" /> : {r.requested_apartment || "—"}</p>
                 </div>
                 <div className="row-actions">
                   {(["approve", "reject"] as const).map((d) => (
-                    <form key={d} action={decideRequest}>
+                    <form key={d} action={decideMember}>
                       {hidden}
-                      <input type="hidden" name="id" value={r.id} />
+                      <input type="hidden" name="user" value={r.user_id} />
                       <input type="hidden" name="decision" value={d} />
                       <Submit><I18nText text={d === "approve" ? "Approuver" : "Refuser"} /></Submit>
                     </form>
@@ -123,36 +122,38 @@ export default async function Page({
             <h2><I18nText text="Habitants de l’immeuble" /></h2>
             {!residents.length && <p><I18nText text="Aucun habitant pour le moment." /></p>}
             {residents.map((r) => (
-              <article key={r.unit_id + r.user_id} className="list-row">
-                <div>
-                  <strong>{r.name || r.email}</strong>
-                  <p className="small">{r.email} {r.phone ? "· " + r.phone : ""}</p>
-                  <p className="small">
-                    {r.unit} ·{" "}
-                    <span className={"status-pill " + (r.blocked || r.revoked ? "danger" : "ok")}>
-                      <I18nText text={r.blocked ? "Bloqué" : r.revoked ? "Révoqué" : "Actif"} />
-                    </span>
-                  </p>
-                </div>
-                <div className="row-actions">
-                  {(r.blocked || !r.revoked) && (
-                    <form action={moderate}>
-                      {hidden}
-                      <input type="hidden" name="unit" value={r.unit_id} />
-                      <input type="hidden" name="user" value={r.user_id} />
-                      <input type="hidden" name="task" value={r.blocked ? "unblock" : "block"} />
-                      <Submit><I18nText text={r.blocked ? "Débloquer" : "Bloquer"} /></Submit>
-                    </form>
-                  )}
-                  <form action={moderate}>
+              <details key={r.user_id} className="list-row" style={{ display: "block" }}>
+                <summary>
+                  <strong>{r.name || r.email}</strong> · {r.apartments.length ? r.apartments.join(", ") : <I18nText text="Sans appartement" />}{" "}
+                  <span className={"status-pill " + (r.blocked ? "danger" : "ok")}><I18nText text={r.blocked ? "Bloqué" : "Actif"} /></span>
+                </summary>
+                <p className="small">{r.email}</p>
+                <form action={updateMember} className="form" style={{ marginTop: 12 }}>
+                  {hidden}
+                  <input type="hidden" name="user" value={r.user_id} />
+                  <label><I18nText text="Nom" /><LocalizedInput name="name" maxLength={160} defaultValue={r.name} /></label>
+                  <label><I18nText text="Téléphone" /><LocalizedInput name="phone" maxLength={24} defaultValue={r.phone} /></label>
+                  <label>
+                    <I18nText text="Appartements (séparés par des virgules, facultatif)" />
+                    <LocalizedInput name="apartments" maxLength={1000} defaultValue={r.apartments.join(", ")} placeholder="A-12, B-3" />
+                  </label>
+                  <Submit><I18nText text="Enregistrer" /></Submit>
+                </form>
+                <div className="row-actions" style={{ marginTop: 12 }}>
+                  <form action={moderateMember}>
                     {hidden}
-                    <input type="hidden" name="unit" value={r.unit_id} />
+                    <input type="hidden" name="user" value={r.user_id} />
+                    <input type="hidden" name="task" value={r.blocked ? "unblock" : "block"} />
+                    <Submit><I18nText text={r.blocked ? "Débloquer" : "Bloquer"} /></Submit>
+                  </form>
+                  <form action={moderateMember}>
+                    {hidden}
                     <input type="hidden" name="user" value={r.user_id} />
                     <input type="hidden" name="task" value="remove" />
                     <Submit><I18nText text="Supprimer" /></Submit>
                   </form>
                 </div>
-              </article>
+              </details>
             ))}
           </section>
         </>
@@ -163,11 +164,11 @@ export default async function Page({
             <h2><I18nText text="Appartements" /></h2>
             {!unitList.length && <p><I18nText text="Aucun appartement pour le moment." /></p>}
             {unitList.map((u) => {
-              const count = residents.filter((r) => r.unit_id === u.id && !r.revoked).length;
+              const names = residents.filter((r) => r.apartments.some((a) => a.toLowerCase() === u.label.toLowerCase())).map((r) => r.name || r.email);
               return (
                 <div key={u.id} className="list-row">
                   <strong>{u.label}</strong>
-                  <span className="small">{count} <I18nText text="habitant(s)" /></span>
+                  <span className="small">{names.length ? names.join(", ") : "—"}</span>
                 </div>
               );
             })}

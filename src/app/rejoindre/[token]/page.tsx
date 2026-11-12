@@ -8,6 +8,7 @@ import { Submit } from "@/components/submit";
 import { Notice } from "@/components/notice";
 import { joinResidence, joinWithAccount } from "./actions";
 import { supabase } from "@/lib/supabase/server";
+import { ResidenceJoin } from "@/components/residence-join";
 export const dynamic = "force-dynamic";
 export default async function Page({
   params,
@@ -21,6 +22,18 @@ export default async function Page({
   const {
     data: { user },
   } = await session.auth.getUser();
+  if (z.uuid().safeParse(token).success) {
+    const { data: info } = await session.rpc("syndic_residence_link_info", { token });
+    if (info)
+      return (
+        <ResidenceJoin
+          token={token}
+          info={info as { residence: string; city: string; syndic: string }}
+          user={user}
+          message={(await searchParams).message}
+        />
+      );
+  }
   let residence = "";
   let manager = "";
   try {
