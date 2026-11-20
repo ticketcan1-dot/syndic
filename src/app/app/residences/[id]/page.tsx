@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { siteUrl } from "@/lib/site-url";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { I18nText } from "@/components/i18n";
@@ -24,6 +25,7 @@ export default async function Page({
   const tab = query.tab ?? "habitants";
   const intlLocale = await getIntlLocale();
   const { db } = await signedIn();
+  const site = await siteUrl();
   const { data: residence } = await db.from("syndic_residences").select("id,name,address,city").eq("id", id).maybeSingle();
   if (!residence) notFound();
   const [units, links, expenses, peopleResult] = await Promise.all([
@@ -76,16 +78,16 @@ export default async function Page({
             <h2><I18nText text="Lien d’invitation de la résidence" /></h2>
             <p className="small"><I18nText text="Un seul lien pour toute la résidence. Chaque habitant crée son compte (e-mail, mot de passe, nom, appartement facultatif), puis vous approuvez sa demande." /></p>
             {openLinks.map((l) => (
-              <div key={l.id} className="list-row">
-                <div>
-                  <ShareLink url={`${process.env.NEXT_PUBLIC_SITE_URL}/rejoindre/${l.id}`} />
-                  <p className="small"><I18nText text="Valable jusqu’au" /> {new Date(l.expires_at).toLocaleDateString(intlLocale)}</p>
+              <div key={l.id} className="share-block">
+                <ShareLink url={`${site}/rejoindre/${l.id}`} residence={residence.name} />
+                <div className="share-footer">
+                  <span className="small"><I18nText text="Valable jusqu’au" /> {new Date(l.expires_at).toLocaleDateString(intlLocale)}</span>
+                  <form action={revokeResidenceLink}>
+                    {hidden}
+                    <input type="hidden" name="token" value={l.id} />
+                    <Submit><I18nText text="Désactiver" /></Submit>
+                  </form>
                 </div>
-                <form action={revokeResidenceLink}>
-                  {hidden}
-                  <input type="hidden" name="token" value={l.id} />
-                  <Submit><I18nText text="Désactiver" /></Submit>
-                </form>
               </div>
             ))}
             {!openLinks.length && (

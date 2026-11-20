@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { siteUrl } from "@/lib/site-url";
 import { LocalizedInput } from "@/components/i18n-input";
 import { I18nText } from "@/components/i18n";
 import { signedIn } from "@/lib/access";
@@ -14,6 +15,7 @@ export default async function Page({
   searchParams: Promise<{ message?: string }>;
 }) {
   const { db } = await signedIn();
+  const site = await siteUrl();
   const data = await workspace();
   const [invitations, posts] = await Promise.all([
     db
@@ -145,8 +147,7 @@ export default async function Page({
               <p className="form-note">
                 <I18nText text="Le résident devra créer son compte avec cette adresse, la vérifier et accepter l’invitation. Partagez-lui :" />
                 <I18nText text={String(" ")} />
-                {process.env.NEXT_PUBLIC_SITE_URL}
-                <I18nText text="/resident" />
+                {site}/resident
               </p>
             </form>
           ) : (
@@ -216,7 +217,7 @@ export default async function Page({
               <strong>{i.email}</strong>
               {!i.revoked_at && !i.accepted_at && (
                 <ShareLink
-                  url={`${process.env.NEXT_PUBLIC_SITE_URL}/invitation/${i.id}`}
+                  url={`${site}/invitation/${i.id}`}
                 />
               )}
               <p>
