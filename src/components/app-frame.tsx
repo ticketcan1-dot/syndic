@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { translate, useLocale } from "@/components/i18n";
-import { Bell, Settings2 } from "lucide-react";
+import { Settings2 } from "lucide-react";
+import { NotificationBell } from "@/components/notification-bell";
 import { Suspense } from "react";
 import { Brand } from "@/components/brand";
 import { MobileNav } from "@/components/mobile-nav";
@@ -12,13 +13,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
       <header className="mobile-header">
         <Brand />
         <div className="actions">
-          <Link
-            href="/operations?view=notifications"
-            className="icon-button"
-            aria-label={translate("Notifications", locale)}
-          >
-            <Bell size={21} />
-          </Link>
+          <NotificationBell />
           <Link href="/compte" className="icon-button" aria-label={translate("Mon profil", locale)}>
             <Settings2 size={21} />
           </Link>

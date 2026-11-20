@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, Link2, Mail, MessageSquare, MoreHorizontal, Send, Share2, X as Close } from "lucide-react";
+import { Check, Copy, Download, Link2, Mail, MessageSquare, MoreHorizontal, Printer, QrCode, Send, Share2, X as Close } from "lucide-react";
+import QRCode from "qrcode";
 import { I18nText, translate, useLocale } from "@/components/i18n";
 import { BrandIcon } from "@/components/brand-icons";
 // Moroccan numbers typed locally (06…, 07…) become international (2126…, 2127…).
@@ -20,6 +21,7 @@ export function ShareLink({ url, residence }: { url: string; residence?: string 
   const [mobile, setMobile] = useState(false);
   const [hint, setHint] = useState("");
   const [phone, setPhone] = useState("");
+  const [qr, setQr] = useState<string | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     setCanShare(typeof navigator.share === "function");
@@ -53,6 +55,36 @@ export function ShareLink({ url, residence }: { url: string; residence?: string 
       setHint(t("Copie impossible : sélectionnez le lien et copiez-le."));
     }
   }
+  async function showQr() {
+    if (qr) return setQr(null);
+    try {
+      setQr(await QRCode.toDataURL(url, { width: 640, margin: 2, errorCorrectionLevel: "M", color: { dark: "#123e34", light: "#ffffff" } }));
+    } catch {
+      setHint(t("QR code indisponible."));
+    }
+  }
+  function printQr() {
+    if (!qr) return;
+    const win = window.open("", "_blank", "width=600,height=760");
+    if (!win) return;
+    const doc = win.document;
+    doc.title = "QR code";
+    const box = doc.createElement("div");
+    box.style.cssText = "font-family:system-ui,sans-serif;text-align:center;padding:40px";
+    const h = doc.createElement("h1");
+    h.textContent = residence ?? "SyndiConnect";
+    const p = doc.createElement("p");
+    p.textContent = t("Scannez ce code pour rejoindre la résidence sur SyndiConnect.");
+    const img = doc.createElement("img");
+    img.src = qr;
+    img.style.cssText = "width:340px;height:340px";
+    const small = doc.createElement("p");
+    small.textContent = url;
+    small.style.cssText = "font-size:12px;color:#555;word-break:break-all";
+    box.append(h, p, img, small);
+    doc.body.append(box);
+    img.onload = () => win.print();
+  }
   function go(href: string) {
     window.open(href, "_blank", "noopener,noreferrer");
   }
@@ -65,6 +97,7 @@ export function ShareLink({ url, residence }: { url: string; residence?: string 
   }
   const apps: { key: string; label: string; color: string; icon: React.ReactNode; action: () => void }[] = [
     { key: "copy", label: t("Copier le lien"), color: "#475569", icon: copied ? <Check size={24} /> : <Link2 size={24} />, action: () => copy() },
+    { key: "qr", label: t("QR code"), color: "#123e34", icon: <QrCode size={24} />, action: showQr },
     { key: "whatsapp", label: "WhatsApp", color: "#25d366", icon: <BrandIcon name="whatsapp" />, action: () => go(`https://wa.me/?text=${m}`) },
     {
       key: "messenger",
@@ -105,10 +138,23 @@ export function ShareLink({ url, residence }: { url: string; residence?: string 
           <I18nText text={copied ? "Lien copié" : "Copier"} />
         </button>
       </div>
-      <button type="button" className="button primary share-open" onClick={() => setOpen(true)}>
-        <Share2 size={17} />
-        <I18nText text="Partager le lien" />
-      </button>
+      <div className="share-buttons">
+        <button type="button" className="button primary share-open" onClick={() => setOpen(true)}>
+          <Share2 size={17} />
+          <I18nText text="Partager le lien" />
+        </button>
+        <button
+          type="button"
+          className="button outline"
+          onClick={async () => {
+            setOpen(true);
+            if (!qr) await showQr();
+          }}
+        >
+          <QrCode size={17} />
+          <I18nText text="QR code" />
+        </button>
+      </div>
       {open && (
         <div className="share-overlay" onClick={() => setOpen(false)}>
           <div className="share-sheet" role="dialog" aria-modal="true" aria-labelledby="share-title" onClick={(e) => e.stopPropagation()}>
@@ -126,6 +172,23 @@ export function ShareLink({ url, residence }: { url: string; residence?: string 
                 <p>{intro}</p>
                 <span>{url}</span>
               </div>
+              {qr && (
+                <div className="share-qr">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={qr} alt={t("QR code du lien d’invitation")} width={220} height={220} />
+                  <p className="small">
+                    <I18nText text="Les habitants scannent ce code avec l’appareil photo de leur téléphone pour ouvrir le lien." />
+                  </p>
+                  <div className="row-actions">
+                    <a className="button primary" href={qr} download={`qr-${(residence ?? "residence").replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.png`}>
+                      <Download size={16} /> <I18nText text="Télécharger" />
+                    </a>
+                    <button type="button" className="button outline" onClick={printQr}>
+                      <Printer size={16} /> <I18nText text="Imprimer" />
+                    </button>
+                  </div>
+                </div>
+              )}
               <form
                 className="share-direct"
                 onSubmit={(event) => {

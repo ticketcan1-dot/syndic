@@ -904,5 +904,14 @@
   "Afficher :": { "ar": "العرض:", "en": "Show:" },
   "N° d’appartement": { "ar": "رقم الشقة", "en": "Apartment number" },
   "Nom de la personne": { "ar": "اسم الشخص", "en": "Person's name" },
-  "Tout sélectionner": { "ar": "تحديد الكل", "en": "Select all" }
+  "Tout sélectionner": { "ar": "تحديد الكل", "en": "Select all" },
+  "non lues": { "ar": "غير مقروءة", "en": "unread" },
+  "Tout marquer comme lu": { "ar": "تحديد الكل كمقروء", "en": "Mark all as read" },
+  "QR code": { "ar": "رمز QR", "en": "QR code" },
+  "QR code indisponible.": { "ar": "رمز QR غير متاح.", "en": "QR code unavailable." },
+  "Scannez ce code pour rejoindre la résidence sur SyndiConnect.": { "ar": "امسح هذا الرمز للانضمام إلى الإقامة على SyndiConnect.", "en": "Scan this code to join the residence on SyndiConnect." },
+  "QR code du lien d’invitation": { "ar": "رمز QR لرابط الدعوة", "en": "Invitation link QR code" },
+  "Les habitants scannent ce code avec l’appareil photo de leur téléphone pour ouvrir le lien.": { "ar": "يمسح السكان هذا الرمز بكاميرا الهاتف لفتح الرابط.", "en": "Residents scan this code with their phone camera to open the link." },
+  "Télécharger": { "ar": "تحميل", "en": "Download" },
+  "Imprimer": { "ar": "طباعة", "en": "Print" }
 }

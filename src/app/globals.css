@@ -2649,3 +2649,92 @@ button[aria-busy="true"] {
   width: fit-content;
   font-weight: 600;
 }
+/* Notification bell */
+.icon-button.bell {
+  position: relative;
+}
+.bell-count {
+  position: absolute;
+  top: -4px;
+  inset-inline-end: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 20px;
+  text-align: center;
+  border: 2px solid #fff;
+  box-sizing: border-box;
+}
+.icon-button.bell.has-unread svg {
+  color: #b45309;
+  transform-origin: 50% 4px;
+  animation: bell-swing 4s ease-in-out infinite;
+}
+.icon-button.bell.ring svg {
+  animation: bell-ring 1s ease-in-out 2;
+}
+@keyframes bell-swing {
+  0%, 82%, 100% { transform: rotate(0); }
+  85% { transform: rotate(14deg); }
+  88% { transform: rotate(-12deg); }
+  91% { transform: rotate(9deg); }
+  94% { transform: rotate(-6deg); }
+  97% { transform: rotate(3deg); }
+}
+@keyframes bell-ring {
+  0%, 100% { transform: rotate(0); }
+  10% { transform: rotate(18deg); }
+  25% { transform: rotate(-16deg); }
+  40% { transform: rotate(12deg); }
+  55% { transform: rotate(-10deg); }
+  70% { transform: rotate(6deg); }
+  85% { transform: rotate(-3deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .icon-button.bell svg { animation: none !important; }
+}
+.notif-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.list-row.unread {
+  background: #fff8e6;
+  border-radius: 12px;
+  padding-inline: 12px;
+  border-inline-start: 3px solid #f59e0b;
+}
+/* QR code */
+.share-buttons {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+.share-qr {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+}
+.share-qr img {
+  width: 220px;
+  height: 220px;
+  image-rendering: pixelated;
+}
+.share-qr p {
+  margin: 0;
+  max-width: 340px;
+}
+.share-qr .button svg {
+  color: inherit;
+}

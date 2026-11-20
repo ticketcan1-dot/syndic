@@ -32,6 +32,7 @@ export const config = {
     "/incidents/:path*",
     "/operations/:path*",
     "/discussion/:path*",
+    "/api/notifications",
     "/app/:path*",
     "/admin/:path*",
     "/resident/:path*",

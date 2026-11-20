@@ -74,6 +74,12 @@ export async function operate(form: FormData) {
       error = Boolean(
         (await db.rpc("syndic_read_notification", { target: id.data })).error,
       );
+    } else if (task === "read_all") {
+      const { data: unread } = await db.from("syndic_inbox").select("id").is("read_at", null).limit(200);
+      const results = await Promise.all(
+        (unread ?? []).map((n) => db.rpc("syndic_read_notification", { target: n.id })),
+      );
+      error = results.some((r) => r.error);
     } else if (task === "meeting") {
       if (!id.success) throw Error();
       error = Boolean(
@@ -110,7 +116,7 @@ export async function operate(form: FormData) {
       ? "messages"
       : task === "meeting"
         ? "meetings"
-        : task === "read"
+        : task === "read" || task === "read_all"
           ? "notifications"
           : "expenses";
   const selectedUnit = task === "chat" && id.success ? "&unit=" + id.data : "";

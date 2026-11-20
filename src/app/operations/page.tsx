@@ -386,12 +386,22 @@ export default async function Page({
             id="notifications"
             style={{ marginTop: 24 }}
           >
-            <h2>
-              <I18nText text="Notifications" />
-            </h2>
+            <div className="notif-head">
+              <h2>
+                <I18nText text="Notifications" />
+              </h2>
+              {inbox.data?.some((n) => !n.read_at) && (
+                <form action={operate}>
+                  <input type="hidden" name="task" value="read_all" />
+                  <Submit>
+                    <I18nText text="Tout marquer comme lu" />
+                  </Submit>
+                </form>
+              )}
+            </div>
             {inbox.data?.length ? (
               inbox.data.map((n) => (
-                <article className="list-row" key={n.id}>
+                <article className={"list-row" + (n.read_at ? "" : " unread")} key={n.id}>
                   <div>
                     <strong><SystemNotification text={n.title} /></strong>
                     <p className="small">
