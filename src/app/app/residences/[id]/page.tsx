@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { siteUrl } from "@/lib/site-url";
+import { ExpenseBoard } from "@/components/expense-board";
+import { loadExpenses } from "@/lib/expenses";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { I18nText } from "@/components/i18n";
@@ -28,10 +30,10 @@ export default async function Page({
   const site = await siteUrl();
   const { data: residence } = await db.from("syndic_residences").select("id,name,address,city").eq("id", id).maybeSingle();
   if (!residence) notFound();
-  const [units, links, expenses, peopleResult] = await Promise.all([
+  const board = await loadExpenses(db, id);
+  const [units, links, peopleResult] = await Promise.all([
     db.from("syndic_units").select("id,label").eq("residence_id", id).order("label"),
     db.from("syndic_residence_links").select("id,expires_at,revoked_at").eq("residence_id", id).is("revoked_at", null).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }),
-    db.from("syndic_expense_entries").select("id,title,amount_cents,due_date,syndic_charge_entries(amount_cents,syndic_payment_entries(amount_cents))").eq("residence_id", id).order("due_date", { ascending: false }),
     db.rpc("syndic_residence_people", { target_residence: id }),
   ]);
   const unitList = units.data ?? [];
@@ -39,7 +41,6 @@ export default async function Page({
   const residents = people.filter((p) => p.status === "approved");
   const requests = people.filter((p) => p.status === "pending");
   const openLinks = links.data ?? [];
-  const fmt = (c: number) => (c / 100).toLocaleString(intlLocale, { maximumFractionDigits: 2 }) + " DH";
   const tabs = [
     ["habitants", "Habitants"],
     ["appartements", "Appartements"],
@@ -59,7 +60,7 @@ export default async function Page({
           </p>
         </div>
       </div>
-      <Notice message={query.message} error={Boolean(units.error || expenses.error || peopleResult.error)} />
+      <Notice message={query.message} error={Boolean(units.error || board.error || peopleResult.error)} />
       <div className="stats">
         <div className="card"><p><I18nText text="Appartements" /></p><div className="stat-number">{unitList.length}</div></div>
         <div className="card"><p><I18nText text="Habitants" /></p><div className="stat-number">{residents.filter((r) => !r.blocked).length}</div></div>
@@ -192,26 +193,7 @@ export default async function Page({
         <div className="split">
           <section className="card">
             <h2><I18nText text="Dépenses de l’immeuble" /></h2>
-            {!expenses.data?.length && <p><I18nText text="Aucune dépense enregistrée." /></p>}
-            {expenses.data?.map((e) => {
-              const charges = (e.syndic_charge_entries ?? []) as { amount_cents: number; syndic_payment_entries: { amount_cents: number }[] }[];
-              const paid = charges.reduce((sum, c) => sum + (c.syndic_payment_entries ?? []).reduce((s, p) => s + p.amount_cents, 0), 0);
-              return (
-                <div key={e.id} className="list-row">
-                  <div>
-                    <strong>{e.title}</strong>
-                    <p className="small">
-                      <I18nText text="Échéance" /> {new Date(e.due_date).toLocaleDateString(intlLocale)} · {charges.length} <I18nText text="appartement(s)" />
-                    </p>
-                  </div>
-                  <div style={{ textAlign: "end" }}>
-                    <strong>{fmt(e.amount_cents)}</strong>
-                    <p className="small"><I18nText text="Réglé" /> : {fmt(paid)}</p>
-                  </div>
-                </div>
-              );
-            })}
-            <Link className="text-link small" href="/operations?view=expenses"><I18nText text="Enregistrer les règlements" /></Link>
+            <ExpenseBoard expenses={board.expenses} locale={intlLocale} back={`/app/residences/${id}`} />
           </section>
           <section className="card">
             <h2><I18nText text="Ajouter une dépense" /></h2>

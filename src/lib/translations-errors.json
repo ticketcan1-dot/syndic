@@ -546,5 +546,49 @@
   "Vous avez déjà une demande ou un accès pour cette résidence.": {
     "ar": "لديك بالفعل طلب أو وصول لهذه الإقامة.",
     "en": "You already have a request or access for this residence."
+  },
+  "Vérifiez le montant, la date et le mode de règlement.": {
+    "ar": "تحقق من المبلغ والتاريخ وطريقة الأداء.",
+    "en": "Check the amount, date and payment method."
+  },
+  "Déclaration refusée : montant supérieur au reste à payer, date future ou trop de déclarations en attente.": {
+    "ar": "تم رفض التصريح: مبلغ أكبر من الباقي، تاريخ مستقبلي أو تصريحات كثيرة في الانتظار.",
+    "en": "Declaration refused: amount above the remaining balance, future date or too many pending declarations."
+  },
+  "Règlement envoyé. Votre syndic doit le confirmer.": {
+    "ar": "تم إرسال الأداء. يجب أن يؤكده السانديك.",
+    "en": "Payment sent. Your syndic must confirm it."
+  },
+  "Décision impossible : déjà traitée ou montant supérieur au reste à payer.": {
+    "ar": "تعذر القرار: تمت معالجته أو المبلغ أكبر من الباقي.",
+    "en": "Decision impossible: already handled or amount above the remaining balance."
+  },
+  "Règlement confirmé.": {
+    "ar": "تم تأكيد الأداء.",
+    "en": "Payment confirmed."
+  },
+  "Règlement refusé.": {
+    "ar": "تم رفض الأداء.",
+    "en": "Payment refused."
+  },
+  "Vérifiez l’appartement, le montant, la date et la référence (3 caractères minimum).": {
+    "ar": "تحقق من الشقة والمبلغ والتاريخ والمرجع (3 أحرف على الأقل).",
+    "en": "Check the apartment, amount, date and reference (3 characters minimum)."
+  },
+  "Enregistrement refusé : vérifiez le montant restant et la date.": {
+    "ar": "تم رفض التسجيل: تحقق من المبلغ المتبقي والتاريخ.",
+    "en": "Recording refused: check the remaining amount and date."
+  },
+  "Règlement enregistré.": {
+    "ar": "تم تسجيل الأداء.",
+    "en": "Payment recorded."
+  },
+  "Aucun impayé à relancer.": {
+    "ar": "لا يوجد غير مؤدين للتذكير.",
+    "en": "No unpaid shares to remind."
+  },
+  "Rappel impossible.": {
+    "ar": "تعذر التذكير.",
+    "en": "Reminder failed."
   }
 }

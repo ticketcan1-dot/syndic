@@ -8,6 +8,8 @@ import { Notice } from "@/components/notice";
 import { Submit } from "@/components/submit";
 import { Brand } from "@/components/brand";
 import { operate } from "./actions";
+import { ExpenseBoard } from "@/components/expense-board";
+import { loadExpenses } from "@/lib/expenses";
 type Context = {
   units: {
     id: string;
@@ -57,6 +59,7 @@ export default async function Page({
         .limit(30),
     ]);
   const data = (context.data ?? { units: [], residences: [] }) as Context;
+  const board = await loadExpenses(db);
   const managed = data.residences.filter((r) => r.can_manage);
   const selected = data.units.find((u) => u.id === query.unit) ?? data.units[0];
   const messages = selected
@@ -67,10 +70,6 @@ export default async function Page({
         .order("created_at", { ascending: false })
         .limit(50)
     : { data: [], error: null };
-  const paid = (charge: string) =>
-    (payments.data ?? [])
-      .filter((p) => p.charge_id === charge)
-      .reduce((sum, p) => sum + Number(p.amount_cents), 0);
   const total = (charges.data ?? []).reduce(
     (s, c) => s + Number(c.amount_cents),
     0,
@@ -121,7 +120,7 @@ export default async function Page({
             meetings,
             inbox,
             messages,
-          ].some((r) => r.error)}
+          ].some((r) => r.error) || board.error}
         />
         {(view === "balances" || view === "expenses") && (
           <>
@@ -146,99 +145,7 @@ export default async function Page({
             <h2>
               <I18nText text="Qui doit quoi ?" />
             </h2>
-            {!charges.data?.length && (
-              <p>
-                <I18nText text="Aucune cotisation pour le moment." />
-              </p>
-            )}
-            {charges.data?.map((c) => {
-              const u = data.units.find((u) => u.id === c.unit_id);
-              const e = expenses.data?.find((e) => e.id === c.expense_id);
-              const balance = Number(c.amount_cents) - paid(c.id);
-              return (
-                <details key={c.id}>
-                  <summary>
-                    {u?.label} · {e?.title} — {mad(balance)}
-                    <I18nText text="à régler" />
-                  </summary>
-                  <p>
-                    <I18nText text="Montant :" />
-                    {mad(Number(c.amount_cents))}
-                    <I18nText text="· Échéance :" />
-                    <I18nText text={String(" ")} />
-                    {e?.due_date}
-                  </p>
-                  {payments.data
-                    ?.filter((p) => p.charge_id === c.id)
-                    .map((p) => (
-                      <p key={p.id} className="small">
-                        {p.paid_on} · {mad(Number(p.amount_cents))}
-                        <I18nText text="· Référence" />
-                        <I18nText text={String(" ")} />
-                        {p.reference}
-                      </p>
-                    ))}
-                  {u?.can_manage && balance > 0 && (
-                    <>
-                      <form action={operate} className="form">
-                        <LocalizedInput
-                          type="hidden"
-                          name="task"
-                          value="payment"
-                        />
-                        <LocalizedInput
-                          type="hidden"
-                          name="target"
-                          value={c.id}
-                        />
-                        <label>
-                          <I18nText text="Montant reçu en MAD" />
-                          <LocalizedInput
-                            name="amount"
-                            type="number"
-                            min="0.01"
-                            max={balance / 100}
-                            step="0.01"
-                            required
-                          />
-                        </label>
-                        <label>
-                          <I18nText text="Date de réception" />
-                          <LocalizedInput type="date" name="date" required />
-                        </label>
-                        <label>
-                          <I18nText text="Référence du règlement vérifié" />
-                          <LocalizedInput
-                            name="reference"
-                            minLength={3}
-                            maxLength={160}
-                            required
-                          />
-                        </label>
-                        <Submit>
-                          <I18nText text="Enregistrer le règlement" />
-                        </Submit>
-                      </form>
-                      <form action={operate} style={{ marginTop: 12 }}>
-                        <LocalizedInput
-                          type="hidden"
-                          name="task"
-                          value="remind"
-                        />
-                        <LocalizedInput
-                          type="hidden"
-                          name="target"
-                          value={c.id}
-                        />
-                        <Submit>
-                          <I18nText text="Rappeler" />
-                        </Submit>
-                      </form>
-                    </>
-                  )}
-                </details>
-              );
-            })}
+            <ExpenseBoard expenses={board.expenses} locale={intlLocale} />
           </section>
         )}
         {view === "expenses" && managed.length > 0 && (
