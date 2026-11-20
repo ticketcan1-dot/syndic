@@ -72,7 +72,13 @@ export async function loadExpenses(db: SupabaseClient, residenceId?: string) {
       shares,
     };
   });
+  const unitNames: Record<string, string[]> = {};
+  for (const u of units) {
+    const names = namesOf(u.id);
+    if (names.length) unitNames[u.id] = names;
+  }
   return {
+    unitNames,
     expenses: list.filter((e) => e.shares.length > 0),
     error: Boolean(context.error || expenses.error || charges.error || payments.error || claims.error),
   };

@@ -4,6 +4,7 @@ import { ExpenseBoard } from "@/components/expense-board";
 import { loadExpenses } from "@/lib/expenses";
 import { cookies } from "next/headers";
 import { SelectAll } from "@/components/select-all";
+import { ShareLabelToggle } from "@/components/share-label-toggle";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { I18nText } from "@/components/i18n";
@@ -219,11 +220,24 @@ export default async function Page({
                 <label><I18nText text="Échéance" /><LocalizedInput name="date" type="date" required /></label>
                 <fieldset className="unit-picker">
                   <legend><I18nText text="Répartir entre" /></legend>
-                  <SelectAll name="units" />
+                  <div className="unit-picker-tools">
+                    <SelectAll name="units" />
+                    <ShareLabelToggle mode={labelMode} />
+                  </div>
                   <div className="unit-grid">
-                    {unitList.map((u) => (
-                      <label key={u.id} className="unit-pick"><input type="checkbox" name="units" value={u.id} defaultChecked /> <span><strong>{u.label}</strong></span></label>
-                    ))}
+                    {unitList.map((u) => {
+                      const names = residents.filter((r) => r.apartments.some((a) => a.toLowerCase() === u.label.toLowerCase())).map((r) => r.name || r.email);
+                      const byName = labelMode === "name" && names.length > 0;
+                      return (
+                        <label key={u.id} className="unit-pick">
+                          <input type="checkbox" name="units" value={u.id} defaultChecked />{" "}
+                          <span>
+                            <strong>{byName ? names.join(", ") : u.label}</strong>
+                            {byName && <small>{u.label}</small>}
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </fieldset>
                 <Submit><I18nText text="Ajouter la dépense" /></Submit>

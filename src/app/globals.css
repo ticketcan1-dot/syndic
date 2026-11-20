@@ -2738,3 +2738,76 @@ button[aria-busy="true"] {
 .share-qr .button svg {
   color: inherit;
 }
+/* Language menu with flags (header, next to the bell) */
+body:has(.header-lang) .global-language {
+  display: none;
+}
+.lang-menu {
+  position: relative;
+}
+.lang-button {
+  padding: 0;
+  cursor: pointer;
+}
+.flag {
+  width: 24px;
+  height: 16px;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.15);
+  display: block;
+  flex-shrink: 0;
+}
+.lang-button .flag {
+  width: 26px;
+  height: 18px;
+}
+.lang-list {
+  position: absolute;
+  top: calc(100% + 8px);
+  inset-inline-end: 0;
+  z-index: 80;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  min-width: 180px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+}
+.lang-list button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: start;
+}
+.lang-list button:hover,
+.lang-list button[aria-selected="true"] {
+  background: #f1f7f3;
+}
+.lang-list button svg:not(.flag) {
+  margin-inline-start: auto;
+  color: #147d63;
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.unit-picker-tools {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}

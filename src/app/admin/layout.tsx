@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { platformAdmin } from "@/lib/access";
 import { signOut } from "@/app/actions";
+import { LanguageMenu } from "@/components/language-menu";
 export const dynamic = "force-dynamic";
 export default async function Layout({
   children,
@@ -56,11 +57,14 @@ export default async function Layout({
             {user.email}
             <I18nText text="· Administration" />
           </span>
-          <form action={signOut}>
-            <button className="text-link">
-              <I18nText text="Déconnexion" />
-            </button>
-          </form>
+          <div className="topbar-actions">
+            <LanguageMenu className="header-lang" />
+            <form action={signOut}>
+              <button className="text-link">
+                <I18nText text="Déconnexion" />
+              </button>
+            </form>
+          </div>
         </header>
         <main className="content">{children}</main>
       </div>

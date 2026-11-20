@@ -11,6 +11,7 @@ import { operate } from "./actions";
 import { ExpenseBoard } from "@/components/expense-board";
 import { loadExpenses } from "@/lib/expenses";
 import { SelectAll } from "@/components/select-all";
+import { ShareLabelToggle } from "@/components/share-label-toggle";
 import { cookies } from "next/headers";
 type Context = {
   units: {
@@ -200,19 +201,32 @@ export default async function Page({
                 <legend>
                   <I18nText text="Pour qui ?" />
                 </legend>
-                <SelectAll name="units" />
+                <div className="unit-picker-tools">
+                  <SelectAll name="units" />
+                  <ShareLabelToggle mode={labelMode} />
+                </div>
                 <div className="unit-grid">
                   {data.units
                     .filter((u) => u.can_manage)
-                    .map((u) => (
-                      <label key={u.id} className="unit-pick">
-                        <input type="checkbox" name="units" value={u.id} />
-                        <span>
-                          <strong>{u.label}</strong>
-                          {managed.length > 1 && <small>{u.residence}</small>}
-                        </span>
-                      </label>
-                    ))}
+                    .map((u) => {
+                      const names = board.unitNames[u.id] ?? [];
+                      const byName = labelMode === "name" && names.length > 0;
+                      return (
+                        <label key={u.id} className="unit-pick">
+                          <input type="checkbox" name="units" value={u.id} />
+                          <span>
+                            <strong>{byName ? names.join(", ") : u.label}</strong>
+                            {(byName || managed.length > 1) && (
+                              <small>
+                                {byName ? u.label : ""}
+                                {byName && managed.length > 1 ? " · " : ""}
+                                {managed.length > 1 ? u.residence : ""}
+                              </small>
+                            )}
+                          </span>
+                        </label>
+                      );
+                    })}
                 </div>
               </fieldset>
               <Submit>
