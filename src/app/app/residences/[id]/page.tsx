@@ -28,14 +28,14 @@ export default async function Page({
   const intlLocale = await getIntlLocale();
   const { db } = await signedIn();
   const site = await siteUrl();
-  const { data: residence } = await db.from("syndic_residences").select("id,name,address,city").eq("id", id).maybeSingle();
-  if (!residence) notFound();
-  const board = await loadExpenses(db, id);
-  const [units, links, peopleResult] = await Promise.all([
+  const [{ data: residence }, units, links, peopleResult, board] = await Promise.all([
+    db.from("syndic_residences").select("id,name,address,city").eq("id", id).maybeSingle(),
     db.from("syndic_units").select("id,label").eq("residence_id", id).order("label"),
     db.from("syndic_residence_links").select("id,expires_at,revoked_at").eq("residence_id", id).is("revoked_at", null).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }),
     db.rpc("syndic_residence_people", { target_residence: id }),
+    loadExpenses(db, id),
   ]);
+  if (!residence) notFound();
   const unitList = units.data ?? [];
   const people = (peopleResult.data ?? []) as Member[];
   const residents = people.filter((p) => p.status === "approved");

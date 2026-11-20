@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { intlLocale as getIntlLocale } from "@/lib/locale-server";
 import { LocalizedInput } from "@/components/i18n-input";
 import { I18nText } from "@/components/i18n";
@@ -30,7 +31,7 @@ export default async function Page({
   const intlLocale = await getIntlLocale();
 
   const { db } = await platformAdmin();
-  const [orgs, subs, history, requests, payments, billing] = await Promise.all([
+  const [orgs, subs, history, requests, payments, billing, { data: overviewData }] = await Promise.all([
     db.rpc("syndic_admin_organizations"),
     db.from("syndic_subscription_records").select("*"),
     db
@@ -49,8 +50,8 @@ export default async function Page({
       .eq("status", "pending")
       .order("created_at"),
     db.from("syndic_billing_settings").select("*").maybeSingle(),
+    db.rpc("syndic_admin_overview"),
   ]);
-  const { data: overviewData } = await db.rpc("syndic_admin_overview");
   const overview = (overviewData ?? { syndics: [], residences: [], residents: [] }) as Overview;
   const proofs: Record<string, string> = {};
   if (payments.data?.length) {
@@ -106,10 +107,10 @@ export default async function Page({
             ["reglages", "RIB et réglages", 0],
           ] as const
         ).map(([key, label, count]) => (
-          <a key={key} href={`/admin?tab=${key}`} className={tab === key ? "selected" : ""}>
+          <Link key={key} href={`/admin?tab=${key}`} className={tab === key ? "selected" : ""}>
             <I18nText text={label} />
             {count > 0 && <span className="count">{count}</span>}
-          </a>
+          </Link>
         ))}
       </nav>
       {tab === "apercu" && (

@@ -857,5 +857,7 @@
   "N° de virement, reçu…": { "ar": "رقم التحويل، الإيصال…", "en": "Transfer number, receipt…" },
   "Règlement déclaré :": { "ar": "أداء مصرح به:", "en": "Payment declared:" },
   "Règlement confirmé par votre syndic": { "ar": "أكد السانديك الأداء", "en": "Payment confirmed by your syndic" },
-  "Règlement refusé par votre syndic": { "ar": "رفض السانديك الأداء", "en": "Payment refused by your syndic" }
+  "Règlement refusé par votre syndic": { "ar": "رفض السانديك الأداء", "en": "Payment refused by your syndic" },
+  "Chargement…": { "ar": "جار التحميل…", "en": "Loading…" },
+  "Chargement de vos informations…": { "ar": "جار تحميل معلوماتك…", "en": "Loading your information…" }
 }

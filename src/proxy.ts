@@ -17,7 +17,9 @@ export async function proxy(request: NextRequest) {
       },
     },
   });
-  await client.auth.getUser();
+  // Refreshes the session cookie when needed. getClaims verifies the token locally when the project
+  // uses asymmetric signing keys (no network call); pages still check the user with getUser().
+  await client.auth.getClaims();
   response.headers.set("Cache-Control", "private, no-store");
   return response;
 }

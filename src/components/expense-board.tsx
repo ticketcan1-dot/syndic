@@ -1,7 +1,7 @@
 import { CalendarDays, Check, Clock3, CircleAlert, Wallet } from "lucide-react";
 import { I18nText } from "@/components/i18n";
 import { LocalizedInput } from "@/components/i18n-input";
-import { Submit } from "@/components/submit";
+import { PendingButton, Submit } from "@/components/submit";
 import type { Expense, Share } from "@/lib/expenses";
 import { claimPayment, decideClaim, recordPayment, remindUnpaid } from "@/app/operations/expense-actions";
 const methods: Record<string, string> = {
@@ -189,9 +189,9 @@ export function ExpenseBoard({
                         <input type="hidden" name="claim" value={c.id} />
                         <input type="hidden" name="decision" value="reject" />
                         <LocalizedInput name="reason" maxLength={500} placeholder="Motif (facultatif)" />
-                        <button className="button outline logout">
+                        <PendingButton className="button outline logout">
                           <I18nText text="Refuser" />
-                        </button>
+                        </PendingButton>
                       </form>
                     </div>
                   </div>
@@ -238,9 +238,9 @@ export function ExpenseBoard({
                   {unpaid.map((s) => (
                     <input key={s.charge_id} type="hidden" name="charge" value={s.charge_id} />
                   ))}
-                  <button className="button outline">
+                  <PendingButton className="button outline">
                     <I18nText text="Relancer les impayés" /> ({unpaid.length})
-                  </button>
+                  </PendingButton>
                 </form>
               </div>
             )}

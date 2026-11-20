@@ -44,9 +44,10 @@ export default async function Page({
   ].includes(query.view ?? "")
     ? query.view!
     : "balances";
-  await db.rpc("syndic_refresh_my_reminders");
-  const [context, charges, payments, expenses, meetings, inbox] =
+  // Everything is loaded in parallel (the reminder refresh included).
+  const [, context, charges, payments, expenses, meetings, inbox, board] =
     await Promise.all([
+      db.rpc("syndic_refresh_my_reminders"),
       db.rpc("syndic_operations_context"),
       db.from("syndic_charge_entries").select("*"),
       db.from("syndic_payment_entries").select("*"),
@@ -57,9 +58,9 @@ export default async function Page({
         .select("*")
         .order("created_at", { ascending: false })
         .limit(30),
+      loadExpenses(db),
     ]);
   const data = (context.data ?? { units: [], residences: [] }) as Context;
-  const board = await loadExpenses(db);
   const managed = data.residences.filter((r) => r.can_manage);
   const selected = data.units.find((u) => u.id === query.unit) ?? data.units[0];
   const messages = selected

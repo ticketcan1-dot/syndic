@@ -1,8 +1,8 @@
-import { I18nText } from "@/components/i18n";
+import { PageSkeleton } from "@/components/page-skeleton";
 export default function Loading() {
   return (
-    <div className="content" role="status">
-      <I18nText text="Chargement de votre espace…" />
+    <div className="skeleton-shell">
+      <PageSkeleton />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import "./globals.css";
 import { cookies } from "next/headers";
 import { validLocale } from "@/lib/locale";
 import { LanguageProvider, LanguagePicker } from "@/components/i18n";
+import { NavigationProgress } from "@/components/navigation-progress";
 export const metadata: Metadata = {
   title: {
     default: "SyndiConnect — Votre copropriété, en toute transparence",
@@ -20,6 +21,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
       <body>
+        <NavigationProgress />
         <LanguageProvider locale={locale}>
           <div className="global-language">
             <LanguagePicker />

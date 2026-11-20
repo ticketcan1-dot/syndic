@@ -4,7 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LayoutDashboard, Building2, Grid2X2, ShieldCheck } from "lucide-react";
 import { Brand } from "@/components/brand";
-import { supabase } from "@/lib/supabase/server";
+import { signedIn } from "@/lib/access";
 import { signOut } from "@/app/actions";
 import { daysLeft, planLabels } from "@/lib/plans";
 export const dynamic = "force-dynamic";
@@ -13,12 +13,9 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const db = await supabase();
-  const {
-    data: { user },
-  } = await db.auth.getUser();
-  if (!user) redirect("/connexion");
-  const [{ data: isAdmin }, { data: status }, { data: membership }] =
+  const { db, user } = await signedIn();
+  // All checks in parallel: one round trip to the database instead of several in a row.
+  const [{ data: isAdmin }, { data: status }, { data: membership }, { data: allSubs }] =
     await Promise.all([
       db.rpc("syndic_is_platform_admin"),
       db.rpc("syndic_my_status"),
@@ -27,14 +24,10 @@ export default async function AppLayout({
         .select("organization_id")
         .eq("user_id", user.id)
         .limit(1),
+      db.from("syndic_subscription_records").select("organization_id,plan,status,ends_at"),
     ]);
   const orgId = membership?.[0]?.organization_id;
-  const { data: subs } = orgId
-    ? await db
-        .from("syndic_subscription_records")
-        .select("plan,status,ends_at")
-        .eq("organization_id", orgId)
-    : { data: null };
+  const subs = (allSubs ?? []).filter((s) => s.organization_id === orgId);
   if (
     isAdmin !== true &&
     !status?.member &&
