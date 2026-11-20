@@ -1,92 +1,178 @@
 "use client";
-import { useEffect, useState } from "react";
-import { Check, Copy, Mail, MessageCircle, MessageSquare, Send, Share2, Camera, ThumbsUp, ExternalLink } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Check, Copy, Link2, Mail, MessageSquare, MoreHorizontal, Send, Share2, X as Close } from "lucide-react";
 import { I18nText, translate, useLocale } from "@/components/i18n";
+import { BrandIcon } from "@/components/brand-icons";
+// Moroccan numbers typed locally (06…, 07…) become international (2126…, 2127…).
+function whatsappNumber(raw: string) {
+  let digits = raw.replace(/[^0-9+]/g, "");
+  if (digits.startsWith("+")) digits = digits.slice(1);
+  else if (digits.startsWith("00")) digits = digits.slice(2);
+  else if (/^0[5-7]\d{8}$/.test(digits)) digits = "212" + digits.slice(1);
+  return /^\d{8,15}$/.test(digits) ? digits : "";
+}
 export function ShareLink({ url, residence }: { url: string; residence?: string }) {
   const locale = useLocale();
+  const t = (text: string) => translate(text, locale);
+  const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
+  const [mobile, setMobile] = useState(false);
   const [hint, setHint] = useState("");
+  const [phone, setPhone] = useState("");
+  const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    setCanShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
+    setCanShare(typeof navigator.share === "function");
+    setMobile(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent));
   }, []);
+  useEffect(() => {
+    if (!open) return;
+    closeRef.current?.focus();
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
   const intro = residence
-    ? `${translate("Rejoignez la résidence", locale)} ${residence} ${translate("sur SyndiConnect :", locale)}`
-    : translate("Rejoignez votre résidence sur SyndiConnect :", locale);
+    ? `${t("Rejoignez la résidence")} ${residence} ${t("sur SyndiConnect :")}`
+    : t("Rejoignez votre résidence sur SyndiConnect :");
   const message = `${intro} ${url}`;
-  const encodedUrl = encodeURIComponent(url);
-  const encodedMessage = encodeURIComponent(message);
-  async function copy() {
+  const u = encodeURIComponent(url);
+  const m = encodeURIComponent(message);
+  async function copy(note?: string) {
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
+      setHint(note ?? t("Lien copié"));
       setTimeout(() => setCopied(false), 2500);
-      return true;
     } catch {
-      return false;
+      setHint(t("Copie impossible : sélectionnez le lien et copiez-le."));
     }
+  }
+  function go(href: string) {
+    window.open(href, "_blank", "noopener,noreferrer");
   }
   async function nativeShare() {
     try {
       await navigator.share({ title: "SyndiConnect", text: intro, url });
     } catch {
-      /* The person closed the share sheet. */
+      /* Share sheet closed. */
     }
   }
-  async function instagram() {
-    // Instagram has no web link for sharing: copy the link, then open Instagram to paste it in a message.
-    await copy();
-    setHint(translate("Lien copié : collez-le dans votre message Instagram.", locale));
-    window.open("https://www.instagram.com/direct/inbox/", "_blank", "noopener,noreferrer");
-  }
-  const apps = [
-    { name: "WhatsApp", href: `https://wa.me/?text=${encodedMessage}`, icon: MessageCircle, color: "#25d366" },
-    { name: "Telegram", href: `https://t.me/share/url?url=${encodedUrl}&text=${encodeURIComponent(intro)}`, icon: Send, color: "#229ed9" },
-    { name: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, icon: ThumbsUp, color: "#1877f2" },
-    { name: "Messenger", href: `fb-messenger://share/?link=${encodedUrl}`, icon: MessageCircle, color: "#0084ff" },
-    { name: "SMS", href: `sms:?&body=${encodedMessage}`, icon: MessageSquare, color: "#4b5563" },
-    { name: "E-mail", href: `mailto:?subject=${encodeURIComponent("SyndiConnect")}&body=${encodedMessage}`, icon: Mail, color: "#0f766e" },
+  const apps: { key: string; label: string; color: string; icon: React.ReactNode; action: () => void }[] = [
+    { key: "copy", label: t("Copier le lien"), color: "#475569", icon: copied ? <Check size={24} /> : <Link2 size={24} />, action: () => copy() },
+    { key: "whatsapp", label: "WhatsApp", color: "#25d366", icon: <BrandIcon name="whatsapp" />, action: () => go(`https://wa.me/?text=${m}`) },
+    {
+      key: "messenger",
+      label: "Messenger",
+      color: "#0084ff",
+      icon: <BrandIcon name="messenger" />,
+      action: () =>
+        mobile
+          ? (window.location.href = `fb-messenger://share/?link=${u}`)
+          : (copy(t("Lien copié : collez-le dans la conversation Messenger.")), go("https://www.messenger.com/")),
+    },
+    { key: "facebook", label: "Facebook", color: "#1877f2", icon: <BrandIcon name="facebook" />, action: () => go(`https://www.facebook.com/sharer/sharer.php?u=${u}`) },
+    {
+      key: "instagram",
+      label: "Instagram",
+      color: "#e1306c",
+      icon: <BrandIcon name="instagram" />,
+      action: () =>
+        mobile && canShare
+          ? nativeShare()
+          : (copy(t("Lien copié : collez-le dans votre message Instagram.")), go("https://www.instagram.com/direct/inbox/")),
+    },
+    { key: "telegram", label: "Telegram", color: "#26a5e4", icon: <BrandIcon name="telegram" />, action: () => go(`https://t.me/share/url?url=${u}&text=${encodeURIComponent(intro)}`) },
+    { key: "email", label: t("E-mail"), color: "#0f766e", icon: <Mail size={24} />, action: () => (window.location.href = `mailto:?subject=${encodeURIComponent("SyndiConnect")}&body=${m}`) },
+    { key: "sms", label: "SMS", color: "#16a34a", icon: <MessageSquare size={24} />, action: () => (window.location.href = `sms:?&body=${m}`) },
+    { key: "threads", label: "Threads", color: "#000000", icon: <BrandIcon name="threads" />, action: () => go(`https://www.threads.net/intent/post?text=${m}`) },
+    { key: "x", label: "X", color: "#000000", icon: <BrandIcon name="x" />, action: () => go(`https://x.com/intent/post?text=${m}`) },
   ];
+  if (canShare)
+    apps.push({ key: "more", label: t("Plus…"), color: "#334155", icon: <MoreHorizontal size={24} />, action: nativeShare });
+  const number = whatsappNumber(phone);
   return (
     <div className="share-box">
       <div className="share-url">
-        <input readOnly value={url} aria-label={translate("Lien d’invitation", locale)} onFocus={(e) => e.currentTarget.select()} />
-        <button type="button" className="button primary" onClick={copy}>
+        <input readOnly value={url} aria-label={t("Lien d’invitation")} onFocus={(e) => e.currentTarget.select()} />
+        <button type="button" className="button outline" onClick={() => copy()}>
           {copied ? <Check size={16} /> : <Copy size={16} />}
           <I18nText text={copied ? "Lien copié" : "Copier"} />
         </button>
       </div>
-      {canShare && (
-        <button type="button" className="button primary share-native" onClick={nativeShare}>
-          <Share2 size={17} />
-          <I18nText text="Partager via une application…" />
-        </button>
-      )}
-      <p className="small share-label">
-        <I18nText text="Partager sur :" />
-      </p>
-      <div className="share-apps">
-        {apps.map(({ name, href, icon: Icon, color }) => (
-          <a key={name} href={href} target="_blank" rel="noopener noreferrer" className="share-app" style={{ ["--app" as string]: color }}>
-            <Icon size={18} />
-            <span>{name === "E-mail" ? <I18nText text="E-mail" /> : name}</span>
-          </a>
-        ))}
-        <button type="button" className="share-app" style={{ ["--app" as string]: "#d62976" }} onClick={instagram}>
-          <Camera size={18} />
-          <span>Instagram</span>
-        </button>
-        <a href={url} target="_blank" rel="noopener noreferrer" className="share-app" style={{ ["--app" as string]: "#147d63" }}>
-          <ExternalLink size={18} />
-          <span>
-            <I18nText text="Ouvrir" />
-          </span>
-        </a>
-      </div>
-      {hint && (
-        <p className="small" role="status">
-          {hint}
-        </p>
+      <button type="button" className="button primary share-open" onClick={() => setOpen(true)}>
+        <Share2 size={17} />
+        <I18nText text="Partager le lien" />
+      </button>
+      {open && (
+        <div className="share-overlay" onClick={() => setOpen(false)}>
+          <div className="share-sheet" role="dialog" aria-modal="true" aria-labelledby="share-title" onClick={(e) => e.stopPropagation()}>
+            <header className="share-head">
+              <button ref={closeRef} type="button" className="share-close" onClick={() => setOpen(false)} aria-label={t("Fermer")}>
+                <Close size={24} />
+              </button>
+              <h2 id="share-title">
+                <I18nText text="Partager" />
+              </h2>
+              <span />
+            </header>
+            <div className="share-body">
+              <div className="share-preview">
+                <p>{intro}</p>
+                <span>{url}</span>
+              </div>
+              <form
+                className="share-direct"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (number) go(`https://wa.me/${number}?text=${m}`);
+                }}
+              >
+                <label htmlFor="share-phone">
+                  <BrandIcon name="whatsapp" size={18} />
+                  <I18nText text="Envoyer directement à un numéro WhatsApp" />
+                </label>
+                <div className="share-direct-row">
+                  <input
+                    id="share-phone"
+                    type="tel"
+                    inputMode="tel"
+                    placeholder="06 12 34 56 78"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                  <button type="submit" className="button whatsapp" disabled={!number}>
+                    <Send size={16} />
+                    <I18nText text="Envoyer" />
+                  </button>
+                </div>
+              </form>
+              {hint && (
+                <p className="share-hint" role="status">
+                  {hint}
+                </p>
+              )}
+            </div>
+            <div className="share-apps-row" role="list">
+              {apps.map((app) => (
+                <button key={app.key} type="button" role="listitem" className="share-app-round" onClick={app.action}>
+                  <span className="share-app-icon" style={{ ["--app" as string]: app.color }}>
+                    {app.icon}
+                  </span>
+                  <span className="share-app-label">{app.label}</span>
+                </button>
+              ))}
+            </div>
+            <p className="share-note">
+              <I18nText text="Choisissez une application : elle s’ouvre avec le message prêt, il ne reste qu’à choisir la personne et envoyer." />
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );

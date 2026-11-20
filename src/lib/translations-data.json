@@ -817,5 +817,14 @@
   "Lien d’invitation": { "ar": "رابط الدعوة", "en": "Invitation link" },
   "Copier": { "ar": "نسخ", "en": "Copy" },
   "Partager via une application…": { "ar": "المشاركة عبر تطبيق…", "en": "Share via an app…" },
-  "Partager sur :": { "ar": "المشاركة على:", "en": "Share on:" }
+  "Partager sur :": { "ar": "المشاركة على:", "en": "Share on:" },
+  "Copier le lien": { "ar": "نسخ الرابط", "en": "Copy link" },
+  "Lien copié : collez-le dans la conversation Messenger.": { "ar": "تم نسخ الرابط: الصقه في محادثة ماسنجر.", "en": "Link copied: paste it into the Messenger chat." },
+  "Copie impossible : sélectionnez le lien et copiez-le.": { "ar": "تعذر النسخ: حدد الرابط وانسخه.", "en": "Copy failed: select the link and copy it." },
+  "Plus…": { "ar": "المزيد…", "en": "More…" },
+  "Partager le lien": { "ar": "مشاركة الرابط", "en": "Share the link" },
+  "Fermer": { "ar": "إغلاق", "en": "Close" },
+  "Partager": { "ar": "مشاركة", "en": "Share" },
+  "Envoyer directement à un numéro WhatsApp": { "ar": "الإرسال مباشرة إلى رقم واتساب", "en": "Send directly to a WhatsApp number" },
+  "Choisissez une application : elle s’ouvre avec le message prêt, il ne reste qu’à choisir la personne et envoyer.": { "ar": "اختر تطبيقاً: سيفتح مع الرسالة جاهزة، وما عليك إلا اختيار الشخص والإرسال.", "en": "Choose an app: it opens with the message ready, you just pick the person and send." }
 }
