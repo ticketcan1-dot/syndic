@@ -802,5 +802,12 @@
   "Oui, rejoindre la résidence": { "ar": "نعم، الانضمام إلى الإقامة", "en": "Yes, join the residence" },
   "Avez-vous un compte sur SyndiConnect ?": { "ar": "هل لديك حساب على SyndiConnect؟", "en": "Do you have a SyndiConnect account?" },
   "Oui, me connecter": { "ar": "نعم، تسجيل الدخول", "en": "Yes, sign in" },
-  "Non, créer mon compte": { "ar": "لا، إنشاء حسابي", "en": "No, create my account" }
+  "Non, créer mon compte": { "ar": "لا، إنشاء حسابي", "en": "No, create my account" },
+  "Demande envoyée le": { "ar": "تاريخ إرسال الطلب", "en": "Request sent on" },
+  "Se déconnecter": { "ar": "تسجيل الخروج", "en": "Sign out" },
+  "Refusée": { "ar": "مرفوضة", "en": "Rejected" },
+  "Notre équipe vérifie votre demande. Vous pourrez accéder à votre espace syndic dès sa validation, avec un essai gratuit d’un mois.": { "ar": "فريقنا يتحقق من طلبك. ستتمكن من الوصول إلى فضاء السانديك فور الموافقة، مع تجربة مجانية لمدة شهر.", "en": "Our team is reviewing your request. You will access your syndic space once approved, with a one-month free trial." },
+  "Indiquez le nom de votre syndic pour gérer vos immeubles et vos habitants.": { "ar": "أدخل اسم السانديك لتسيير عماراتك وسكانك.", "en": "Enter your syndic name to manage your buildings and residents." },
+  "Vérification par notre équipe": { "ar": "التحقق من طرف فريقنا", "en": "Review by our team" },
+  "Accès à votre espace syndic": { "ar": "الوصول إلى فضاء السانديك", "en": "Access to your syndic space" }
 }
