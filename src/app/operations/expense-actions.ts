@@ -16,7 +16,10 @@ function backTo(form: FormData) {
 function done(form: FormData, text: string): never {
   revalidatePath("/operations");
   const back = backTo(form);
-  redirect(back + (back.includes("?") ? "&" : "?") + "message=" + encodeURIComponent(text));
+  // Reopen the expense card the action was made from.
+  const expense = z.uuid().safeParse(form.get("expense"));
+  const open = expense.success ? `&open=${expense.data}#e-${expense.data}` : "";
+  redirect(back + (back.includes("?") ? "&" : "?") + "message=" + encodeURIComponent(text) + open);
 }
 export async function claimPayment(form: FormData) {
   const { db } = await signedIn();

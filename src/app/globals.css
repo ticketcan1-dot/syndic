@@ -2811,3 +2811,118 @@ body:has(.header-lang) .global-language {
   gap: 10px;
   flex-wrap: wrap;
 }
+/* Expenses grouped by month, collapsible cards */
+.expense-month {
+  border: 0;
+  padding: 0;
+}
+.expense-month > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #f1f5f4;
+  font-weight: 700;
+}
+.expense-month > summary::-webkit-details-marker,
+.expense-card > summary::-webkit-details-marker {
+  display: none;
+}
+.expense-month > summary::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-inline-end: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+  margin-inline-end: 4px;
+}
+[dir="rtl"] .expense-month > summary::before {
+  transform: rotate(45deg);
+}
+.expense-month[open] > summary::before {
+  transform: rotate(45deg);
+}
+.month-name {
+  flex: 1;
+}
+.month-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.expense-month-list {
+  display: grid;
+  gap: 10px;
+  padding-top: 10px;
+}
+.expense-card {
+  padding: 0;
+  gap: 0;
+}
+.expense-card > summary {
+  list-style: none;
+  cursor: pointer;
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px;
+}
+.expense-card[open] > summary {
+  padding-bottom: 10px;
+}
+.expense-card > :not(summary) {
+  margin: 0 18px 14px;
+}
+.expense-peek {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+.expense-toggle {
+  margin-inline-start: auto;
+  width: 9px;
+  height: 9px;
+  border-inline-end: 2px solid #64748b;
+  border-bottom: 2px solid #64748b;
+  transform: rotate(45deg);
+  transition: transform 0.15s;
+}
+.expense-card[open] .expense-toggle {
+  transform: rotate(-135deg);
+}
+.expense-card:not([open]):hover {
+  border-color: #b7e3cd;
+}
+.status-pill.warn {
+  background: #fef3c7;
+  color: #92400e;
+}
+/* Collapsed cards: one compact block (title + amount on the same line) */
+.expense-card:not([open]) .expense-head {
+  flex-direction: row;
+  align-items: flex-start;
+}
+.expense-card:not([open]) .expense-total {
+  justify-items: end;
+  text-align: end;
+}
+.expense-card:not([open]) .expense-total .small {
+  display: none;
+}
+.expense-card:not([open]) .expense-head h3 {
+  font-size: 16px;
+}
+.expense-card:not([open]) > summary {
+  gap: 8px;
+  padding: 14px 16px;
+}

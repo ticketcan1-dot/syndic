@@ -22,7 +22,7 @@ export default async function Page({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ message?: string; tab?: string }>;
+  searchParams: Promise<{ message?: string; tab?: string; open?: string }>;
 }) {
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
@@ -208,7 +208,7 @@ export default async function Page({
         <div className="split">
           <section className="card">
             <h2><I18nText text="Dépenses de l’immeuble" /></h2>
-            <ExpenseBoard expenses={board.expenses} locale={intlLocale} back={`/app/residences/${id}`} labelMode={labelMode} />
+            <ExpenseBoard expenses={board.expenses} locale={intlLocale} back={`/app/residences/${id}`} labelMode={labelMode} openId={query.open} />
           </section>
           <section className="card">
             <h2><I18nText text="Ajouter une dépense" /></h2>

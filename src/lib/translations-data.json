@@ -913,5 +913,8 @@
   "QR code du lien d’invitation": { "ar": "رمز QR لرابط الدعوة", "en": "Invitation link QR code" },
   "Les habitants scannent ce code avec l’appareil photo de leur téléphone pour ouvrir le lien.": { "ar": "يمسح السكان هذا الرمز بكاميرا الهاتف لفتح الرابط.", "en": "Residents scan this code with their phone camera to open the link." },
   "Télécharger": { "ar": "تحميل", "en": "Download" },
-  "Imprimer": { "ar": "طباعة", "en": "Print" }
+  "Imprimer": { "ar": "طباعة", "en": "Print" },
+  "dépense(s)": { "ar": "مصروف", "en": "expense(s)" },
+  "à confirmer": { "ar": "في انتظار التأكيد", "en": "to confirm" },
+  "réglé(s)": { "ar": "مؤداة", "en": "paid" }
 }

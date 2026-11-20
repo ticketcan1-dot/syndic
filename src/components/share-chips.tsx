@@ -20,12 +20,14 @@ export function ShareChips({
   action,
   back,
   today,
+  expenseId,
 }: {
   shares: ChipShare[];
   canManage: boolean;
   action: (form: FormData) => Promise<void>;
   back?: string;
   today: string;
+  expenseId?: string;
 }) {
   const locale = useLocale();
   const [open, setOpen] = useState<string | null>(null);
@@ -73,6 +75,7 @@ export function ShareChips({
       {selected && (
         <form action={action} className="chip-pay" key={selected.charge_id}>
           {back && <input type="hidden" name="back" value={back} />}
+          {expenseId && <input type="hidden" name="expense" value={expenseId} />}
           <input type="hidden" name="charge" value={selected.charge_id} />
           <div className="chip-pay-head">
             <strong>

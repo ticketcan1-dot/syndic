@@ -23,16 +23,30 @@ export function ExpenseBoard({
   locale,
   back,
   labelMode = "unit",
+  openId,
 }: {
   expenses: Expense[];
   locale: string;
   back?: string;
   labelMode?: "unit" | "name";
+  openId?: string;
 }) {
   const mad = (cents: number) =>
     new Intl.NumberFormat(locale, { style: "currency", currency: "MAD", maximumFractionDigits: 2 }).format(cents / 100);
   const today = new Date().toISOString().slice(0, 10);
-  const backField = back ? <input type="hidden" name="back" value={back} /> : null;
+  const monthName = (key: string) => {
+    const label = new Date(key + "-01T12:00:00").toLocaleDateString(locale, { month: "long", year: "numeric" });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  };
+  // Expenses grouped by month of their due date (most recent first).
+  const months: { key: string; items: Expense[] }[] = [];
+  for (const e of expenses) {
+    const key = e.due_date.slice(0, 7);
+    const group = months.find((m) => m.key === key);
+    if (group) group.items.push(e);
+    else months.push({ key, items: [e] });
+  }
+  months.sort((a, b) => b.key.localeCompare(a.key));
   if (!expenses.length)
     return (
       <p className="empty">
@@ -42,7 +56,31 @@ export function ExpenseBoard({
   return (
     <div className="expense-list">
       {expenses.some((e) => e.can_manage) && <ShareLabelToggle mode={labelMode} />}
-      {expenses.map((e) => {
+      {months.map((month, monthIndex) => {
+        const monthTotal = month.items.reduce((s, e) => s + e.shares.reduce((t, x) => t + x.amount, 0), 0);
+        const monthPaid = month.items.reduce((s, e) => s + e.shares.reduce((t, x) => t + Math.min(x.paid, x.amount), 0), 0);
+        const toConfirm = month.items.reduce((s, e) => s + e.shares.reduce((t, x) => t + x.claims.filter((c) => c.status === "pending").length, 0), 0);
+        return (
+          <details key={month.key} className="expense-month" open={monthIndex === 0 || month.items.some((e) => e.id === openId)}>
+            <summary>
+              <span className="month-name">{monthName(month.key)}</span>
+              <span className="month-meta">
+                {month.items.length} <I18nText text="dépense(s)" /> · {mad(monthPaid)} / {mad(monthTotal)}
+                {toConfirm > 0 && (
+                  <span className="status-pill warn">
+                    {toConfirm} <I18nText text="à confirmer" />
+                  </span>
+                )}
+              </span>
+            </summary>
+            <div className="expense-month-list">
+      {month.items.map((e) => {
+        const backField = (
+          <>
+            {back && <input type="hidden" name="back" value={back} />}
+            <input type="hidden" name="expense" value={e.id} />
+          </>
+        );
         const paid = e.shares.reduce((s, x) => s + Math.min(x.paid, x.amount), 0);
         const total = e.shares.reduce((s, x) => s + x.amount, 0);
         const percent = total ? Math.round((paid / total) * 100) : 0;
@@ -50,7 +88,8 @@ export function ExpenseBoard({
         const unpaid = e.shares.filter((s) => s.paid < s.amount);
         const overdue = e.due_date < today && unpaid.length > 0;
         return (
-          <article key={e.id} className="expense-card">
+          <details key={e.id} id={"e-" + e.id} className="expense-card" open={openId === e.id}>
+            <summary className="expense-summary">
             <header className="expense-head">
               <div>
                 <h3>{e.title}</h3>
@@ -79,10 +118,23 @@ export function ExpenseBoard({
             <div className="expense-progress" aria-label={`${percent}%`}>
               <span style={{ width: `${percent}%` }} />
             </div>
+            <div className="expense-peek small">
+              <span>
+                {e.shares.filter((x) => x.paid >= x.amount).length}/{e.shares.length} <I18nText text="réglé(s)" />
+              </span>
+              {pendingClaims.length > 0 && (
+                <span className="status-pill warn">
+                  {pendingClaims.length} <I18nText text="à confirmer" />
+                </span>
+              )}
+              <span className="expense-toggle" aria-hidden="true" />
+            </div>
+            </summary>
             <ShareChips
               canManage={e.can_manage}
               action={recordPayment}
               back={back}
+              expenseId={e.id}
               today={today}
               shares={e.shares.map((x) => {
                 const byName = e.can_manage && labelMode === "name" && x.names.length > 0;
@@ -214,7 +266,11 @@ export function ExpenseBoard({
                 </form>
               </div>
             )}
-          </article>
+          </details>
+        );
+      })}
+            </div>
+          </details>
         );
       })}
     </div>

@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ message?: string; unit?: string; view?: string }>;
+  searchParams: Promise<{ message?: string; unit?: string; view?: string; open?: string }>;
 }) {
   const intlLocale = await getIntlLocale();
   const mad = (v: number) =>
@@ -150,7 +150,7 @@ export default async function Page({
             <h2>
               <I18nText text="Qui doit quoi ?" />
             </h2>
-            <ExpenseBoard expenses={board.expenses} locale={intlLocale} labelMode={labelMode} />
+            <ExpenseBoard expenses={board.expenses} locale={intlLocale} labelMode={labelMode} openId={query.open} />
           </section>
         )}
         {view === "expenses" && managed.length > 0 && (
