@@ -1,4 +1,7 @@
+import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { provisionClient } from "@/lib/provision";
+import { EXPENSE_BUCKET } from "@/lib/attachments";
 export type Claim = {
   id: string;
   amount_cents: number;
@@ -18,7 +21,9 @@ export type Share = {
   paid: number;
   claims: Claim[];
 };
+export type Attachment = { id: string; name: string; mime: string; size: number; url: string | null };
 export type Expense = {
+  attachments: Attachment[];
   id: string;
   title: string;
   due_date: string;
@@ -35,7 +40,7 @@ type Context = {
 export async function loadExpenses(db: SupabaseClient, residenceId?: string) {
   let expenseQuery = db.from("syndic_expense_entries").select("id,title,due_date,amount_cents,residence_id").order("due_date", { ascending: false });
   if (residenceId) expenseQuery = expenseQuery.eq("residence_id", residenceId);
-  const [context, expenses, charges, payments, claims, people] = await Promise.all([
+  const [context, expenses, charges, payments, claims, people, files] = await Promise.all([
     db.rpc("syndic_operations_context"),
     expenseQuery,
     db.from("syndic_charge_entries").select("id,expense_id,unit_id,amount_cents"),
@@ -43,7 +48,17 @@ export async function loadExpenses(db: SupabaseClient, residenceId?: string) {
     db.from("syndic_payment_claims").select("id,charge_id,amount_cents,paid_on,method,reference,note,status,decision_note,created_at").order("created_at", { ascending: false }),
     // Resident names per apartment (only returned for residences the caller manages).
     db.rpc("syndic_manager_people"),
+    db.from("syndic_expense_attachments").select("id,expense_id,file_path,file_name,mime_type,size_bytes").order("created_at"),
   ]);
+  // Temporary links (1 hour) to the private files the caller is allowed to see.
+  const urls: Record<string, string> = {};
+  const paths = (files.data ?? []).map((f) => f.file_path);
+  if (paths.length) {
+    try {
+      const { data } = await provisionClient().storage.from(EXPENSE_BUCKET).createSignedUrls(paths, 3600);
+      data?.forEach((d) => d.path && d.signedUrl && (urls[d.path] = d.signedUrl));
+    } catch {}
+  }
   const residents = ((people.data ?? { residents: [] }) as { residents: { unit_id: string; name: string; email: string; revoked: boolean }[] }).residents;
   const namesOf = (unitId: string) =>
     [...new Set(residents.filter((r) => r.unit_id === unitId && !r.revoked).map((r) => (r.name || r.email || "").trim()).filter(Boolean))];
@@ -62,6 +77,9 @@ export async function loadExpenses(db: SupabaseClient, residenceId?: string) {
       }))
       .sort((a, b) => a.unit.localeCompare(b.unit, "fr", { numeric: true }));
     return {
+      attachments: (files.data ?? [])
+        .filter((f) => f.expense_id === e.id)
+        .map((f) => ({ id: f.id, name: f.file_name, mime: f.mime_type, size: Number(f.size_bytes), url: urls[f.file_path] ?? null })),
       id: e.id,
       title: e.title,
       due_date: e.due_date,
@@ -80,6 +98,6 @@ export async function loadExpenses(db: SupabaseClient, residenceId?: string) {
   return {
     unitNames,
     expenses: list.filter((e) => e.shares.length > 0),
-    error: Boolean(context.error || expenses.error || charges.error || payments.error || claims.error),
+    error: Boolean(context.error || expenses.error || charges.error || payments.error || claims.error), // attachments are optional: a missing table must not hide the expenses
   };
 }

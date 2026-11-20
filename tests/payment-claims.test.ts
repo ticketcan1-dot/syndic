@@ -71,3 +71,20 @@ it("the syndic can refuse a declared payment", async () => {
   await as(omar);
   expect((await db.query<{ status: string; decision_note: string }>("select status,decision_note from public.syndic_payment_claims")).rows[0]).toEqual({ status: "rejected", decision_note: "Non reçu" });
 });
+it("the syndic attaches files to an expense; residents with a share can see them, others cannot", async () => {
+  await db.exec("reset role");
+  await db.exec(readFileSync("supabase/migrations/202611210001_expense_attachments.sql", "utf8"));
+  const expense = (await db.query<{ id: string }>("select id from public.syndic_expense_entries limit 1")).rows[0].id;
+  await as(sara);
+  await expect(db.query("select public.syndic_add_expense_attachment($1,$2,'facture.pdf','application/pdf',1000)", [expense, expense + "/a.pdf"])).rejects.toThrow();
+  await as(syndic);
+  await expect(db.query("select public.syndic_add_expense_attachment($1,'autre/a.pdf','facture.pdf','application/pdf',1000)", [expense])).rejects.toThrow();
+  const att = await one<string>("select public.syndic_add_expense_attachment($1,$2,'facture.pdf','application/pdf',1000) r", [expense, expense + "/a.pdf"]);
+  await as(sara);
+  expect((await db.query<{ file_name: string }>("select file_name from public.syndic_expense_attachments")).rows[0].file_name).toBe("facture.pdf");
+  await expect(db.query("select public.syndic_remove_expense_attachment($1)", [att])).rejects.toThrow();
+  await as(admin);
+  expect((await db.query("select * from public.syndic_expense_attachments")).rows).toHaveLength(0);
+  await as(syndic);
+  expect(await one<string>("select public.syndic_remove_expense_attachment($1) r", [att])).toBe(expense + "/a.pdf");
+});

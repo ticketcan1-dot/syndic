@@ -654,5 +654,37 @@
   "Vérifiez le montant et la date.": {
     "ar": "تحقق من المبلغ والتاريخ.",
     "en": "Check the amount and date."
+  },
+  "Fichiers invalides (10 maximum).": {
+    "ar": "ملفات غير صالحة (10 كحد أقصى).",
+    "en": "Invalid files (10 maximum)."
+  },
+  "Vous ne pouvez pas modifier cette dépense.": {
+    "ar": "لا يمكنك تعديل هذا المصروف.",
+    "en": "You cannot edit this expense."
+  },
+  "Préparation de l’envoi impossible.": {
+    "ar": "تعذر تحضير الإرسال.",
+    "en": "Could not prepare the upload."
+  },
+  "Préparation de l’envoi impossible (configuration du serveur).": {
+    "ar": "تعذر تحضير الإرسال (إعدادات الخادم).",
+    "en": "Could not prepare the upload (server configuration)."
+  },
+  "Pièce jointe supprimée.": {
+    "ar": "تم حذف المرفق.",
+    "en": "Attachment deleted."
+  },
+  "Certains fichiers n’ont pas pu être envoyés.": {
+    "ar": "تعذر إرسال بعض الملفات.",
+    "en": "Some files could not be uploaded."
+  },
+  "Dépense créée, mais certaines pièces jointes n’ont pas pu être envoyées.": {
+    "ar": "تم إنشاء المصروف، لكن تعذر إرسال بعض المرفقات.",
+    "en": "Expense created, but some attachments could not be uploaded."
+  },
+  "Dépense refusée.": {
+    "ar": "تم رفض المصروف.",
+    "en": "Expense refused."
   }
 }

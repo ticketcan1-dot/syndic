@@ -4,6 +4,7 @@ import { ExpenseBoard } from "@/components/expense-board";
 import { loadExpenses } from "@/lib/expenses";
 import { cookies } from "next/headers";
 import { SelectAll } from "@/components/select-all";
+import { ExpenseCreateForm } from "@/components/expense-create-form";
 import { ShareLabelToggle } from "@/components/share-label-toggle";
 import { notFound } from "next/navigation";
 import { z } from "zod";
@@ -14,7 +15,7 @@ import { Submit } from "@/components/submit";
 import { ShareLink } from "@/components/share-link";
 import { signedIn } from "@/lib/access";
 import { intlLocale as getIntlLocale } from "@/lib/locale-server";
-import { addApartment, addExpense, createResidenceLink, revokeResidenceLink, decideMember, updateMember, moderateMember, setPermissions } from "./actions";
+import { addApartment, createResidenceLink, revokeResidenceLink, decideMember, updateMember, moderateMember, setPermissions } from "./actions";
 export const dynamic = "force-dynamic";
 type Member = { user_id: string; email: string; status: string; name: string; phone: string; requested_apartment: string; blocked: boolean; apartments: string[]; can_post?: boolean; can_photo?: boolean; can_poll?: boolean };
 export default async function Page({
@@ -213,7 +214,7 @@ export default async function Page({
           <section className="card">
             <h2><I18nText text="Ajouter une dépense" /></h2>
             {unitList.length ? (
-              <form action={addExpense} className="form">
+              <ExpenseCreateForm back={`/app/residences/${id}`} submitLabel="Ajouter la dépense">
                 {hidden}
                 <label><I18nText text="Titre" /><LocalizedInput name="title" minLength={3} maxLength={160} required placeholder="Nettoyage des escaliers" /></label>
                 <label><I18nText text="Montant total (DH)" /><LocalizedInput name="amount" inputMode="decimal" pattern="\d+(\.\d{1,2})?" required /></label>
@@ -240,8 +241,7 @@ export default async function Page({
                     })}
                   </div>
                 </fieldset>
-                <Submit><I18nText text="Ajouter la dépense" /></Submit>
-              </form>
+                              </ExpenseCreateForm>
             ) : (
               <p><I18nText text="Ajoutez d’abord un appartement." /></p>
             )}

@@ -1,4 +1,6 @@
-import { CalendarDays, Check, Clock3 } from "lucide-react";
+import { CalendarDays, Check, Clock3, FileText, Image as ImageIcon, Paperclip, Trash2 } from "lucide-react";
+import { AttachmentUploader } from "@/components/attachment-uploader";
+import { removeExpenseAttachment } from "@/app/operations/attachment-actions";
 import { I18nText } from "@/components/i18n";
 import { LocalizedInput } from "@/components/i18n-input";
 import { PendingButton, Submit } from "@/components/submit";
@@ -127,6 +129,11 @@ export function ExpenseBoard({
                   {pendingClaims.length} <I18nText text="à confirmer" />
                 </span>
               )}
+              {e.attachments.length > 0 && (
+                <span className="attach-count">
+                  <Paperclip size={13} /> {e.attachments.length}
+                </span>
+              )}
               <span className="expense-toggle" aria-hidden="true" />
             </div>
             </summary>
@@ -149,6 +156,41 @@ export function ExpenseBoard({
                 };
               })}
             />
+
+            {(e.attachments.length > 0 || e.can_manage) && (
+              <div className="expense-files">
+                {e.attachments.length > 0 && (
+                  <ul className="attach-list">
+                    {e.attachments.map((a) => (
+                      <li key={a.id}>
+                        {a.mime.startsWith("image/") ? <ImageIcon size={16} /> : <FileText size={16} />}
+                        {a.url ? (
+                          <a href={a.url} target="_blank" rel="noopener noreferrer">
+                            {a.name}
+                          </a>
+                        ) : (
+                          <span>{a.name}</span>
+                        )}
+                        <span className="small">{a.size >= 1048576 ? (a.size / 1048576).toFixed(1) + " Mo" : Math.max(1, Math.round(a.size / 1024)) + " Ko"}</span>
+                        {e.can_manage && (
+                          <form action={removeExpenseAttachment}>
+                            {backField}
+                            <input type="hidden" name="attachment" value={a.id} />
+                            <PendingButton className="icon-ghost">
+                              <Trash2 size={15} />
+                              <span className="sr-only">
+                                <I18nText text="Supprimer" />
+                              </span>
+                            </PendingButton>
+                          </form>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {e.can_manage && <AttachmentUploader expenseId={e.id} back={back} />}
+              </div>
+            )}
 
             {/* Resident: pay my share */}
             {!e.can_manage &&

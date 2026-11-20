@@ -11,6 +11,7 @@ import { operate } from "./actions";
 import { ExpenseBoard } from "@/components/expense-board";
 import { loadExpenses } from "@/lib/expenses";
 import { SelectAll } from "@/components/select-all";
+import { ExpenseCreateForm } from "@/components/expense-create-form";
 import { ShareLabelToggle } from "@/components/share-label-toggle";
 import { cookies } from "next/headers";
 type Context = {
@@ -162,8 +163,7 @@ export default async function Page({
             <h2>
               <I18nText text="Ajouter une dépense" />
             </h2>
-            <form action={operate} className="form">
-              <LocalizedInput type="hidden" name="task" value="expense" />
+            <ExpenseCreateForm submitLabel="Partager la dépense">
               <label>
                 <I18nText text="Résidence" />
                 <select name="target">
@@ -229,10 +229,7 @@ export default async function Page({
                     })}
                 </div>
               </fieldset>
-              <Submit>
-                <I18nText text="Partager la dépense" />
-              </Submit>
-            </form>
+            </ExpenseCreateForm>
           </section>
         )}
         {view === "messages" && (

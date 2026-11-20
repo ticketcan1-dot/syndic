@@ -916,5 +916,10 @@
   "Imprimer": { "ar": "طباعة", "en": "Print" },
   "dépense(s)": { "ar": "مصروف", "en": "expense(s)" },
   "à confirmer": { "ar": "في انتظار التأكيد", "en": "to confirm" },
-  "réglé(s)": { "ar": "مؤداة", "en": "paid" }
+  "réglé(s)": { "ar": "مؤداة", "en": "paid" },
+  "Envoi en cours…": { "ar": "جار الإرسال…", "en": "Uploading…" },
+  "Ajouter une pièce jointe": { "ar": "إضافة مرفق", "en": "Add an attachment" },
+  "PDF, photos, Word ou Excel · 10 Mo maximum par fichier": { "ar": "PDF أو صور أو Word أو Excel · 10 ميغابايت كحد أقصى لكل ملف", "en": "PDF, photos, Word or Excel · 10 MB max per file" },
+  "Pièces jointes (facultatif)": { "ar": "المرفقات (اختياري)", "en": "Attachments (optional)" },
+  "Facture, devis, photo… PDF, images, Word ou Excel · 10 Mo maximum par fichier": { "ar": "فاتورة، عرض سعر، صورة… PDF أو صور أو Word أو Excel · 10 ميغابايت كحد أقصى لكل ملف", "en": "Invoice, quote, photo… PDF, images, Word or Excel · 10 MB max per file" }
 }

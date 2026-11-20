@@ -2926,3 +2926,81 @@ body:has(.header-lang) .global-language {
   gap: 8px;
   padding: 14px 16px;
 }
+/* Expense attachments */
+.attach-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 700;
+  color: #475569;
+}
+.card .attach-count svg,
+.card .expense-files svg,
+.card .attach-pick svg {
+  color: inherit;
+}
+.expense-files {
+  display: grid;
+  gap: 10px;
+}
+.attach-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.attach-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fafcfb;
+  font-size: 14px;
+  min-width: 0;
+}
+.attach-list li > svg {
+  color: #147d63;
+  flex-shrink: 0;
+}
+.attach-list a,
+.attach-list li > span:not(.small) {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--ink);
+}
+.attach-list a:hover {
+  text-decoration: underline;
+}
+.attach-list form {
+  margin: 0;
+}
+.attach-upload {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.attach-upload label.button {
+  cursor: pointer;
+}
+.attach-upload label.busy {
+  opacity: 0.7;
+  cursor: progress;
+}
+.attach-pick {
+  display: grid;
+  gap: 6px;
+}
+.attach-pick > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
