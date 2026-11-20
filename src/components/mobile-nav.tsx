@@ -23,10 +23,10 @@ export function MobileNav() {
       active: path === "/operations" && view === "expenses",
     },
     {
-      href: "/operations?view=messages",
+      href: "/discussion",
       title: "Messages",
       icon: MessageCircle,
-      active: path === "/operations" && view === "messages",
+      active: path === "/discussion" || (path === "/operations" && view === "messages"),
     },
     {
       href: "/operations?view=meetings",

@@ -2262,3 +2262,266 @@ button[aria-busy="true"] {
   margin: 0 auto;
   padding: 32px 20px;
 }
+/* Residence discussion channel */
+.chan-page .page-heading {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.chan-composer {
+  margin-bottom: 18px;
+  display: grid;
+  gap: 12px;
+}
+.chan-composer textarea,
+.chan-reply-box textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font: inherit;
+  resize: vertical;
+  background: #fbfdfb;
+}
+.chan-composer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.chan-file {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #147d63;
+  cursor: pointer;
+}
+.chan-file input {
+  font-size: 12px;
+  max-width: 210px;
+}
+.chan-poll-create summary,
+.chan-reply-box summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  list-style: none;
+}
+.chan-poll-create summary::-webkit-details-marker,
+.chan-reply-box summary::-webkit-details-marker {
+  display: none;
+}
+.chan-poll-create[open] summary,
+.chan-reply-box[open] summary {
+  margin-bottom: 12px;
+}
+.chan-locked {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chan-feed {
+  display: grid;
+  gap: 14px;
+}
+.chan-thread {
+  padding: 18px 18px 12px;
+  display: grid;
+  gap: 10px;
+}
+.chan-msg {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.chan-msg.reply {
+  padding-top: 10px;
+}
+.chan-avatar {
+  flex: 0 0 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #334155;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+.chan-msg.reply .chan-avatar {
+  flex-basis: 30px;
+  height: 30px;
+  font-size: 11px;
+}
+.chan-avatar.syndic {
+  background: #147d63;
+  color: #fff;
+}
+.chan-content {
+  flex: 1;
+  min-width: 0;
+}
+.chan-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chan-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #147d63;
+  background: #e7f6ef;
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.chan-delete {
+  margin-inline-start: auto;
+}
+.icon-ghost {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+}
+.icon-ghost:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.card .icon-ghost svg,
+.card .chan-poll svg,
+.card .chan-file svg,
+.card .chan-reply-box svg,
+.card .chan-poll-create svg {
+  color: inherit;
+}
+.chan-body {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.chan-deleted {
+  margin: 4px 0 0;
+  font-style: italic;
+  color: var(--muted);
+}
+.chan-photo {
+  display: block;
+  margin-top: 8px;
+  max-width: min(100%, 420px);
+  max-height: 360px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+}
+.chan-replies {
+  margin-inline-start: 50px;
+  border-inline-start: 2px solid #e2e8f0;
+  padding-inline-start: 14px;
+  display: grid;
+}
+.chan-reply-box {
+  margin-inline-start: 50px;
+  border: 0;
+  padding: 0;
+}
+.chan-poll {
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: grid;
+  gap: 8px;
+  max-width: 520px;
+}
+.chan-poll-q {
+  margin: 0;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.chan-poll-results {
+  display: grid;
+  gap: 6px;
+}
+.chan-poll-bar {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  border-radius: 10px;
+  background: #f1f5f9;
+  overflow: hidden;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+.chan-poll-bar .fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #d1fae5;
+}
+.chan-poll-bar.mine .fill {
+  background: #a7f3d0;
+}
+.chan-poll-bar .label,
+.chan-poll-bar .pct {
+  position: relative;
+  font-weight: 600;
+}
+.chan-poll-form {
+  display: grid;
+  gap: 6px;
+}
+.chan-poll-option {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.chan-poll-option input {
+  width: auto !important;
+}
+.chan-poll-foot {
+  margin: 0;
+}
+.chan-link-btn {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+.perm-form {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f3f7f4;
+}
+@media (max-width: 560px) {
+  .chan-replies,
+  .chan-reply-box {
+    margin-inline-start: 18px;
+  }
+}
+.chan-body {
+  color: var(--ink);
+}
+.chan-poll-create,
+.chan-poll details {
+  border: 0;
+  padding: 0;
+}

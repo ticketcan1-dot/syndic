@@ -11,9 +11,9 @@ import { Submit } from "@/components/submit";
 import { ShareLink } from "@/components/share-link";
 import { signedIn } from "@/lib/access";
 import { intlLocale as getIntlLocale } from "@/lib/locale-server";
-import { addApartment, addExpense, createResidenceLink, revokeResidenceLink, decideMember, updateMember, moderateMember } from "./actions";
+import { addApartment, addExpense, createResidenceLink, revokeResidenceLink, decideMember, updateMember, moderateMember, setPermissions } from "./actions";
 export const dynamic = "force-dynamic";
-type Member = { user_id: string; email: string; status: string; name: string; phone: string; requested_apartment: string; blocked: boolean; apartments: string[] };
+type Member = { user_id: string; email: string; status: string; name: string; phone: string; requested_apartment: string; blocked: boolean; apartments: string[]; can_post?: boolean; can_photo?: boolean; can_poll?: boolean };
 export default async function Page({
   params,
   searchParams,
@@ -55,6 +55,7 @@ export default async function Page({
             <I18nText text="← Mes immeubles" />
           </Link>
           <h1>{residence.name}</h1>
+          <Link href={`/discussion?r=${id}`} className="button outline" style={{ marginTop: 8 }}><I18nText text="Ouvrir la discussion" /></Link>
           <p>
             {residence.address} · {residence.city}
           </p>
@@ -129,6 +130,7 @@ export default async function Page({
                 <summary>
                   <strong>{r.name || r.email}</strong> · {r.apartments.length ? r.apartments.join(", ") : <I18nText text="Sans appartement" />}{" "}
                   <span className={"status-pill " + (r.blocked ? "danger" : "ok")}><I18nText text={r.blocked ? "Bloqué" : "Actif"} /></span>
+                  {r.can_post === false && <span className="status-pill"><I18nText text="Lecture seule" /></span>}
                 </summary>
                 <p className="small">{r.email}</p>
                 <form action={updateMember} className="form" style={{ marginTop: 12 }}>
@@ -141,6 +143,15 @@ export default async function Page({
                     <LocalizedInput name="apartments" maxLength={1000} defaultValue={r.apartments.join(", ")} placeholder="A-12, B-3" />
                   </label>
                   <Submit><I18nText text="Enregistrer" /></Submit>
+                </form>
+                <form action={setPermissions} className="perm-form">
+                  {hidden}
+                  <input type="hidden" name="user" value={r.user_id} />
+                  <strong className="small"><I18nText text="Autorisations dans la discussion" /></strong>
+                  <label className="checkbox-row"><input type="checkbox" name="can_post" defaultChecked={r.can_post ?? true} /> <I18nText text="Peut écrire et répondre" /></label>
+                  <label className="checkbox-row"><input type="checkbox" name="can_photo" defaultChecked={r.can_photo ?? true} /> <I18nText text="Peut partager des photos" /></label>
+                  <label className="checkbox-row"><input type="checkbox" name="can_poll" defaultChecked={r.can_poll ?? false} /> <I18nText text="Peut lancer des sondages" /></label>
+                  <Submit><I18nText text="Enregistrer les autorisations" /></Submit>
                 </form>
                 <div className="row-actions" style={{ marginTop: 12 }}>
                   <form action={moderateMember}>

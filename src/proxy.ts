@@ -31,6 +31,7 @@ export const config = {
     "/invitation/:path*",
     "/incidents/:path*",
     "/operations/:path*",
+    "/discussion/:path*",
     "/app/:path*",
     "/admin/:path*",
     "/resident/:path*",

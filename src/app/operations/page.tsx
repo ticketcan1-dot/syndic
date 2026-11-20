@@ -224,6 +224,11 @@ export default async function Page({
             <p>
               <I18nText text="Chaque conversation concerne un seul lot et ses habitants autorisés." />
             </p>
+            <p>
+              <Link href="/discussion" className="button primary">
+                <I18nText text="Ouvrir la discussion de la résidence" />
+              </Link>
+            </p>
             <div className="actions">
               {data.units.map((u) => (
                 <Link

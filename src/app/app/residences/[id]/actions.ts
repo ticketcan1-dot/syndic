@@ -105,3 +105,17 @@ export async function moderateMember(form: FormData) {
       : await db.rpc("syndic_set_member_blocked", { target_residence: residence, target_user: v.user, blocked: v.task === "block" });
   back(residence, error ? "Action refusée. Vérifiez vos droits." : v.task === "remove" ? "Utilisateur supprimé de votre espace." : v.task === "block" ? "Utilisateur bloqué." : "Utilisateur débloqué.");
 }
+export async function setPermissions(form: FormData) {
+  const residence = residenceOf(form);
+  const { db } = await signedIn();
+  const user = z.uuid().safeParse(form.get("user"));
+  if (!user.success) back(residence, "Action invalide.");
+  const { error } = await db.rpc("syndic_set_member_permissions", {
+    target_residence: residence,
+    target_user: user.data,
+    may_post: form.get("can_post") === "on",
+    may_photo: form.get("can_photo") === "on",
+    may_poll: form.get("can_poll") === "on",
+  });
+  back(residence, error ? "Modification refusée." : "Autorisations de discussion enregistrées.");
+}

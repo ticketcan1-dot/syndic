@@ -590,5 +590,65 @@
   "Rappel impossible.": {
     "ar": "تعذر التذكير.",
     "en": "Reminder failed."
+  },
+  "Message trop long (4000 caractères maximum).": {
+    "ar": "الرسالة طويلة جداً (4000 حرف كحد أقصى).",
+    "en": "Message too long (4000 characters maximum)."
+  },
+  "Photo : PNG, JPG, WEBP ou GIF de 5 Mo maximum.": {
+    "ar": "الصورة: PNG أو JPG أو WEBP أو GIF بحد أقصى 5 ميغابايت.",
+    "en": "Photo: PNG, JPG, WEBP or GIF up to 5 MB."
+  },
+  "Vous n’êtes pas autorisé à partager des photos.": {
+    "ar": "غير مسموح لك بمشاركة الصور.",
+    "en": "You are not allowed to share photos."
+  },
+  "Envoi de la photo impossible.": {
+    "ar": "تعذر إرسال الصورة.",
+    "en": "Photo upload failed."
+  },
+  "Écrivez un message ou ajoutez une photo.": {
+    "ar": "اكتب رسالة أو أضف صورة.",
+    "en": "Write a message or add a photo."
+  },
+  "Message refusé : vous n’êtes peut-être pas autorisé à écrire, ou vous envoyez trop vite.": {
+    "ar": "تم رفض الرسالة: ربما غير مسموح لك بالكتابة أو ترسل بسرعة كبيرة.",
+    "en": "Message refused: you may not be allowed to write, or you are sending too fast."
+  },
+  "Un sondage demande une question et entre 2 et 6 réponses.": {
+    "ar": "يتطلب الاستطلاع سؤالاً وما بين 2 و6 أجوبة.",
+    "en": "A poll needs a question and 2 to 6 answers."
+  },
+  "Sondage refusé : vous n’êtes pas autorisé à lancer des sondages.": {
+    "ar": "تم رفض الاستطلاع: غير مسموح لك بإطلاق الاستطلاعات.",
+    "en": "Poll refused: you are not allowed to create polls."
+  },
+  "Choisissez une réponse.": {
+    "ar": "اختر جواباً.",
+    "en": "Choose an answer."
+  },
+  "Vote impossible : sondage clos.": {
+    "ar": "تعذر التصويت: الاستطلاع مغلق.",
+    "en": "Vote impossible: poll closed."
+  },
+  "Sondage clôturé.": {
+    "ar": "تم إغلاق الاستطلاع.",
+    "en": "Poll closed."
+  },
+  "Action refusée.": {
+    "ar": "تم رفض الإجراء.",
+    "en": "Action refused."
+  },
+  "Suppression refusée.": {
+    "ar": "تم رفض الحذف.",
+    "en": "Deletion refused."
+  },
+  "Message supprimé.": {
+    "ar": "تم حذف الرسالة.",
+    "en": "Message deleted."
+  },
+  "Autorisations de discussion enregistrées.": {
+    "ar": "تم حفظ صلاحيات النقاش.",
+    "en": "Discussion permissions saved."
   }
 }
