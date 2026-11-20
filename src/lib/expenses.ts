@@ -13,6 +13,7 @@ export type Claim = {
 export type Share = {
   charge_id: string;
   unit: string;
+  names: string[];
   amount: number;
   paid: number;
   claims: Claim[];
@@ -34,13 +35,18 @@ type Context = {
 export async function loadExpenses(db: SupabaseClient, residenceId?: string) {
   let expenseQuery = db.from("syndic_expense_entries").select("id,title,due_date,amount_cents,residence_id").order("due_date", { ascending: false });
   if (residenceId) expenseQuery = expenseQuery.eq("residence_id", residenceId);
-  const [context, expenses, charges, payments, claims] = await Promise.all([
+  const [context, expenses, charges, payments, claims, people] = await Promise.all([
     db.rpc("syndic_operations_context"),
     expenseQuery,
     db.from("syndic_charge_entries").select("id,expense_id,unit_id,amount_cents"),
     db.from("syndic_payment_entries").select("charge_id,amount_cents"),
     db.from("syndic_payment_claims").select("id,charge_id,amount_cents,paid_on,method,reference,note,status,decision_note,created_at").order("created_at", { ascending: false }),
+    // Resident names per apartment (only returned for residences the caller manages).
+    db.rpc("syndic_manager_people"),
   ]);
+  const residents = ((people.data ?? { residents: [] }) as { residents: { unit_id: string; name: string; email: string; revoked: boolean }[] }).residents;
+  const namesOf = (unitId: string) =>
+    [...new Set(residents.filter((r) => r.unit_id === unitId && !r.revoked).map((r) => (r.name || r.email || "").trim()).filter(Boolean))];
   const units = ((context.data ?? { units: [] }) as Context).units;
   const list: Expense[] = (expenses.data ?? []).map((e) => {
     const firstUnit = units.find((u) => u.residence_id === e.residence_id);
@@ -49,6 +55,7 @@ export async function loadExpenses(db: SupabaseClient, residenceId?: string) {
       .map((c) => ({
         charge_id: c.id,
         unit: units.find((u) => u.id === c.unit_id)?.label ?? "—",
+        names: namesOf(c.unit_id),
         amount: Number(c.amount_cents),
         paid: (payments.data ?? []).filter((p) => p.charge_id === c.id).reduce((s, p) => s + Number(p.amount_cents), 0),
         claims: (claims.data ?? []).filter((k) => k.charge_id === c.id).map((k) => ({ ...k, amount_cents: Number(k.amount_cents) })) as Claim[],

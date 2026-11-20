@@ -62,10 +62,13 @@ export async function decideClaim(form: FormData) {
 export async function recordPayment(form: FormData) {
   const { db } = await signedIn();
   const input = z
-    .object({ charge: z.uuid(), amount: money, date: z.iso.date(), reference: z.string().trim().min(3).max(160) })
-    .safeParse({ charge: form.get("charge"), amount: form.get("amount"), date: form.get("date"), reference: form.get("reference") });
-  if (!input.success) done(form, "Vérifiez l’appartement, le montant, la date et la référence (3 caractères minimum).");
+    .object({ charge: z.uuid(), amount: money, date: z.iso.date(), reference: z.string().trim().max(150).default("") })
+    .safeParse({ charge: form.get("charge"), amount: form.get("amount"), date: form.get("date"), reference: form.get("reference") ?? "" });
+  if (!input.success) done(form, "Vérifiez le montant et la date.");
   const v = input.data;
+  // The reference is optional for the syndic; a unique one is generated when left empty or too short.
+  const suffix = Math.random().toString(36).slice(2, 6);
+  v.reference = v.reference.length >= 3 ? v.reference : `Reçu le ${v.date} #${suffix}`;
   const { error } = await db.rpc("syndic_record_payment", { target_charge: v.charge, paid_cents: v.amount, payment_reference: v.reference, payment_date: v.date });
   done(form, error ? "Enregistrement refusé : vérifiez le montant restant et la date." : "Règlement enregistré.");
 }

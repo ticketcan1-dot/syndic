@@ -2525,3 +2525,127 @@ button[aria-busy="true"] {
   border: 0;
   padding: 0;
 }
+/* Clickable shares, display toggle, unit picker */
+.share-chip.clickable {
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.share-chip.clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.12);
+}
+.share-chip.active {
+  outline: 2px solid #147d63;
+  outline-offset: 1px;
+}
+.chip-sub {
+  font-size: 11px;
+  opacity: 0.75;
+}
+.chip-hint {
+  margin: -4px 0 0;
+}
+.chip-pay {
+  border: 1px solid #b7e3cd;
+  background: #f3faf6;
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+.chip-pay p {
+  margin: 0;
+}
+.chip-pay-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.chip-pay-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+.chip-pay-fields label {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.chip-pay-fields input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 10px;
+  font: inherit;
+  background: #fff;
+  min-width: 0;
+}
+.label-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.label-toggle button {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--ink);
+}
+.label-toggle button.selected {
+  background: #147d63;
+  border-color: #147d63;
+  color: #fff;
+}
+.unit-picker {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+.unit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+}
+.unit-pick {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  margin: 0;
+}
+.unit-pick input {
+  width: auto !important;
+  min-height: 0 !important;
+  margin: 0;
+}
+.unit-pick span {
+  display: grid;
+  line-height: 1.2;
+}
+.unit-pick small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.unit-pick:has(input:checked) {
+  border-color: #147d63;
+  background: #e7f6ef;
+}
+.unit-pick.select-all {
+  width: fit-content;
+  font-weight: 600;
+}

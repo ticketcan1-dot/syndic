@@ -894,5 +894,15 @@
   "réponse(s)": { "ar": "رد", "en": "reply/replies" },
   "Ouvrir la discussion de la résidence": { "ar": "فتح نقاش الإقامة", "en": "Open the residence discussion" },
   "Nouvelle réponse :": { "ar": "رد جديد:", "en": "New reply:" },
-  "Nouveau sondage :": { "ar": "استطلاع جديد:", "en": "New poll:" }
+  "Nouveau sondage :": { "ar": "استطلاع جديد:", "en": "New poll:" },
+  "Reste": { "ar": "الباقي", "en": "Left" },
+  "Enregistrer un règlement": { "ar": "تسجيل أداء", "en": "Record a payment" },
+  "Cliquez sur un appartement pour enregistrer son règlement.": { "ar": "اضغط على شقة لتسجيل أدائها.", "en": "Click an apartment to record its payment." },
+  "Règlement de": { "ar": "أداء", "en": "Payment from" },
+  "Reste à payer :": { "ar": "الباقي للأداء:", "en": "Left to pay:" },
+  "Espèces, n° de virement…": { "ar": "نقداً، رقم التحويل…", "en": "Cash, transfer number…" },
+  "Afficher :": { "ar": "العرض:", "en": "Show:" },
+  "N° d’appartement": { "ar": "رقم الشقة", "en": "Apartment number" },
+  "Nom de la personne": { "ar": "اسم الشخص", "en": "Person's name" },
+  "Tout sélectionner": { "ar": "تحديد الكل", "en": "Select all" }
 }

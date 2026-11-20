@@ -1,9 +1,11 @@
-import { CalendarDays, Check, Clock3, CircleAlert, Wallet } from "lucide-react";
+import { CalendarDays, Check, Clock3 } from "lucide-react";
 import { I18nText } from "@/components/i18n";
 import { LocalizedInput } from "@/components/i18n-input";
 import { PendingButton, Submit } from "@/components/submit";
 import type { Expense, Share } from "@/lib/expenses";
 import { claimPayment, decideClaim, recordPayment, remindUnpaid } from "@/app/operations/expense-actions";
+import { ShareChips, type ChipShare } from "@/components/share-chips";
+import { ShareLabelToggle } from "@/components/share-label-toggle";
 const methods: Record<string, string> = {
   virement: "Virement",
   especes: "Espèces",
@@ -16,20 +18,16 @@ function shareState(s: Share) {
   if (s.paid > 0) return "partial";
   return "due";
 }
-const stateLabels: Record<string, string> = {
-  paid: "Réglé",
-  claimed: "À confirmer",
-  partial: "Partiel",
-  due: "À régler",
-};
 export function ExpenseBoard({
   expenses,
   locale,
   back,
+  labelMode = "unit",
 }: {
   expenses: Expense[];
   locale: string;
   back?: string;
+  labelMode?: "unit" | "name";
 }) {
   const mad = (cents: number) =>
     new Intl.NumberFormat(locale, { style: "currency", currency: "MAD", maximumFractionDigits: 2 }).format(cents / 100);
@@ -43,6 +41,7 @@ export function ExpenseBoard({
     );
   return (
     <div className="expense-list">
+      {expenses.some((e) => e.can_manage) && <ShareLabelToggle mode={labelMode} />}
       {expenses.map((e) => {
         const paid = e.shares.reduce((s, x) => s + Math.min(x.paid, x.amount), 0);
         const total = e.shares.reduce((s, x) => s + x.amount, 0);
@@ -80,20 +79,24 @@ export function ExpenseBoard({
             <div className="expense-progress" aria-label={`${percent}%`}>
               <span style={{ width: `${percent}%` }} />
             </div>
-            <div className="expense-shares">
-              {e.shares.map((s) => {
-                const state = shareState(s);
-                return (
-                  <span key={s.charge_id} className={"share-chip " + state}>
-                    {state === "paid" ? <Check size={13} /> : state === "claimed" ? <Clock3 size={13} /> : state === "partial" ? <Wallet size={13} /> : <CircleAlert size={13} />}
-                    <strong>{s.unit}</strong> {mad(s.amount)}
-                    <em>
-                      <I18nText text={stateLabels[state]} />
-                    </em>
-                  </span>
-                );
+            <ShareChips
+              canManage={e.can_manage}
+              action={recordPayment}
+              back={back}
+              today={today}
+              shares={e.shares.map((x) => {
+                const byName = e.can_manage && labelMode === "name" && x.names.length > 0;
+                return {
+                  charge_id: x.charge_id,
+                  label: byName ? x.names.join(", ") : x.unit,
+                  sublabel: byName ? x.unit : "",
+                  state: shareState(x) as ChipShare["state"],
+                  amountText: mad(x.amount),
+                  remainingText: mad(Math.max(x.amount - x.paid, 0)),
+                  remaining: Math.max(x.amount - x.paid, 0),
+                };
               })}
-            </div>
+            />
 
             {/* Resident: pay my share */}
             {!e.can_manage &&
@@ -200,39 +203,6 @@ export function ExpenseBoard({
             )}
             {e.can_manage && unpaid.length > 0 && (
               <div className="expense-tools">
-                <details>
-                  <summary className="text-link">
-                    <I18nText text="Enregistrer un règlement reçu" />
-                  </summary>
-                  <form action={recordPayment} className="form" style={{ marginTop: 12 }}>
-                    {backField}
-                    <label>
-                      <I18nText text="Appartement" />
-                      <select name="charge">
-                        {unpaid.map((s) => (
-                          <option key={s.charge_id} value={s.charge_id}>
-                            {s.unit} · {mad(s.amount - s.paid)}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      <I18nText text="Montant reçu (MAD)" />
-                      <LocalizedInput name="amount" inputMode="decimal" required />
-                    </label>
-                    <label>
-                      <I18nText text="Date de réception" />
-                      <LocalizedInput name="date" type="date" max={today} defaultValue={today} required />
-                    </label>
-                    <label>
-                      <I18nText text="Référence du règlement vérifié" />
-                      <LocalizedInput name="reference" minLength={3} maxLength={160} required />
-                    </label>
-                    <Submit>
-                      <I18nText text="Enregistrer le règlement" />
-                    </Submit>
-                  </form>
-                </details>
                 <form action={remindUnpaid}>
                   {backField}
                   {unpaid.map((s) => (

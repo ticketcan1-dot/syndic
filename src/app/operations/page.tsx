@@ -10,6 +10,8 @@ import { Brand } from "@/components/brand";
 import { operate } from "./actions";
 import { ExpenseBoard } from "@/components/expense-board";
 import { loadExpenses } from "@/lib/expenses";
+import { SelectAll } from "@/components/select-all";
+import { cookies } from "next/headers";
 type Context = {
   units: {
     id: string;
@@ -35,6 +37,7 @@ export default async function Page({
 
   const { db } = await signedIn();
   const query = await searchParams;
+  const labelMode = (await cookies()).get("syndic_share_label")?.value === "name" ? "name" : "unit";
   const view = [
     "balances",
     "expenses",
@@ -146,7 +149,7 @@ export default async function Page({
             <h2>
               <I18nText text="Qui doit quoi ?" />
             </h2>
-            <ExpenseBoard expenses={board.expenses} locale={intlLocale} />
+            <ExpenseBoard expenses={board.expenses} locale={intlLocale} labelMode={labelMode} />
           </section>
         )}
         {view === "expenses" && managed.length > 0 && (
@@ -193,22 +196,24 @@ export default async function Page({
                 <I18nText text="Date limite" />
                 <LocalizedInput name="date" type="date" required />
               </label>
-              <fieldset>
+              <fieldset className="unit-picker">
                 <legend>
                   <I18nText text="Pour qui ?" />
                 </legend>
-                {data.units
-                  .filter((u) => u.can_manage)
-                  .map((u) => (
-                    <label key={u.id} className="check-row">
-                      <LocalizedInput
-                        type="checkbox"
-                        name="units"
-                        value={u.id}
-                      />
-                      {u.residence} · {u.label}
-                    </label>
-                  ))}
+                <SelectAll name="units" />
+                <div className="unit-grid">
+                  {data.units
+                    .filter((u) => u.can_manage)
+                    .map((u) => (
+                      <label key={u.id} className="unit-pick">
+                        <input type="checkbox" name="units" value={u.id} />
+                        <span>
+                          <strong>{u.label}</strong>
+                          {managed.length > 1 && <small>{u.residence}</small>}
+                        </span>
+                      </label>
+                    ))}
+                </div>
               </fieldset>
               <Submit>
                 <I18nText text="Partager la dépense" />

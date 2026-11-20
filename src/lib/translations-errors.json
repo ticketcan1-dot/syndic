@@ -650,5 +650,9 @@
   "Autorisations de discussion enregistrées.": {
     "ar": "تم حفظ صلاحيات النقاش.",
     "en": "Discussion permissions saved."
+  },
+  "Vérifiez le montant et la date.": {
+    "ar": "تحقق من المبلغ والتاريخ.",
+    "en": "Check the amount and date."
   }
 }

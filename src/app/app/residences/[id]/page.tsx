@@ -2,6 +2,8 @@ import Link from "next/link";
 import { siteUrl } from "@/lib/site-url";
 import { ExpenseBoard } from "@/components/expense-board";
 import { loadExpenses } from "@/lib/expenses";
+import { cookies } from "next/headers";
+import { SelectAll } from "@/components/select-all";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { I18nText } from "@/components/i18n";
@@ -24,6 +26,7 @@ export default async function Page({
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
   const query = await searchParams;
+  const labelMode = (await cookies()).get("syndic_share_label")?.value === "name" ? "name" : "unit";
   const tab = query.tab ?? "habitants";
   const intlLocale = await getIntlLocale();
   const { db } = await signedIn();
@@ -204,7 +207,7 @@ export default async function Page({
         <div className="split">
           <section className="card">
             <h2><I18nText text="Dépenses de l’immeuble" /></h2>
-            <ExpenseBoard expenses={board.expenses} locale={intlLocale} back={`/app/residences/${id}`} />
+            <ExpenseBoard expenses={board.expenses} locale={intlLocale} back={`/app/residences/${id}`} labelMode={labelMode} />
           </section>
           <section className="card">
             <h2><I18nText text="Ajouter une dépense" /></h2>
@@ -214,11 +217,14 @@ export default async function Page({
                 <label><I18nText text="Titre" /><LocalizedInput name="title" minLength={3} maxLength={160} required placeholder="Nettoyage des escaliers" /></label>
                 <label><I18nText text="Montant total (DH)" /><LocalizedInput name="amount" inputMode="decimal" pattern="\d+(\.\d{1,2})?" required /></label>
                 <label><I18nText text="Échéance" /><LocalizedInput name="date" type="date" required /></label>
-                <fieldset className="plan-choice">
+                <fieldset className="unit-picker">
                   <legend><I18nText text="Répartir entre" /></legend>
-                  {unitList.map((u) => (
-                    <label key={u.id}><input type="checkbox" name="units" value={u.id} defaultChecked /> {u.label}</label>
-                  ))}
+                  <SelectAll name="units" />
+                  <div className="unit-grid">
+                    {unitList.map((u) => (
+                      <label key={u.id} className="unit-pick"><input type="checkbox" name="units" value={u.id} defaultChecked /> <span><strong>{u.label}</strong></span></label>
+                    ))}
+                  </div>
                 </fieldset>
                 <Submit><I18nText text="Ajouter la dépense" /></Submit>
               </form>
