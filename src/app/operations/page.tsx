@@ -12,6 +12,7 @@ import { ExpenseBoard } from "@/components/expense-board";
 import { loadExpenses } from "@/lib/expenses";
 import { SelectAll } from "@/components/select-all";
 import { ExpenseCreateForm } from "@/components/expense-create-form";
+import { FrequentExpenses } from "@/components/frequent-expenses";
 import { ShareLabelToggle } from "@/components/share-label-toggle";
 import { cookies } from "next/headers";
 type Context = {
@@ -66,6 +67,10 @@ export default async function Page({
       loadExpenses(db),
     ]);
   const data = (context.data ?? { units: [], residences: [] }) as Context;
+  // Most recent first: used to reuse the last amount of a frequent expense.
+  const recentExpenses = board.expenses
+    .filter((e) => e.can_manage)
+    .map((e) => ({ residence: e.residence_id, title: e.title, amount: e.amount }));
   const managed = data.residences.filter((r) => r.can_manage);
   const selected = data.units.find((u) => u.id === query.unit) ?? data.units[0];
   const messages = selected
@@ -174,6 +179,7 @@ export default async function Page({
                   ))}
                 </select>
               </label>
+              <FrequentExpenses recent={recentExpenses} />
               <label>
                 <I18nText text="Objet" />
                 <LocalizedInput

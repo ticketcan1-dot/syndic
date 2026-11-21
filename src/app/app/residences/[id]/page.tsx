@@ -5,6 +5,7 @@ import { loadExpenses } from "@/lib/expenses";
 import { cookies } from "next/headers";
 import { SelectAll } from "@/components/select-all";
 import { ExpenseCreateForm } from "@/components/expense-create-form";
+import { FrequentExpenses } from "@/components/frequent-expenses";
 import { ShareLabelToggle } from "@/components/share-label-toggle";
 import { notFound } from "next/navigation";
 import { z } from "zod";
@@ -216,6 +217,7 @@ export default async function Page({
             {unitList.length ? (
               <ExpenseCreateForm back={`/app/residences/${id}`} submitLabel="Ajouter la dépense">
                 {hidden}
+                <FrequentExpenses recent={board.expenses.map((e) => ({ residence: e.residence_id, title: e.title, amount: e.amount }))} />
                 <label><I18nText text="Titre" /><LocalizedInput name="title" minLength={3} maxLength={160} required placeholder="Nettoyage des escaliers" /></label>
                 <label><I18nText text="Montant total (DH)" /><LocalizedInput name="amount" inputMode="decimal" pattern="\d+(\.\d{1,2})?" required /></label>
                 <label><I18nText text="Échéance" /><LocalizedInput name="date" type="date" required /></label>

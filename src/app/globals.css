@@ -3004,3 +3004,45 @@ body:has(.header-lang) .global-language {
   gap: 6px;
   font-weight: 600;
 }
+/* Frequent expenses shortcuts */
+.frequent {
+  display: grid;
+  gap: 8px;
+}
+.frequent-label {
+  font-weight: 700;
+}
+.frequent-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.frequent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.card .frequent-chip svg {
+  color: var(--c);
+}
+.frequent-chip:hover {
+  border-color: var(--c);
+}
+.frequent-chip.active {
+  border-color: var(--c);
+  background: color-mix(in srgb, var(--c) 12%, white);
+}
+.frequent-hint {
+  color: #147d63;
+  font-weight: 600;
+}
