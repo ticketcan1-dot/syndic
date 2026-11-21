@@ -1,4 +1,4 @@
--- A COLLER dans Supabase > SQL Editor > New query, puis Run (une seule fois).
+-- DEJA APPLIQUE sur la base le 21/11/2026 : ne pas relancer.
 -- Pièces jointes des dépenses.
 -- Attachments (invoices, quotes, photos…) on expenses created by the syndic.
 -- Files live in the private bucket "syndic-expense-files"; anyone who can see the expense can see them.
