@@ -932,5 +932,8 @@
   "Gaz": { "ar": "الغاز", "en": "Gas" },
   "Dépenses fréquentes": { "ar": "مصاريف متكررة", "en": "Frequent expenses" },
   "Utilisée souvent": { "ar": "تستعمل كثيراً", "en": "Used often" },
-  "Montant de la dernière fois repris. Modifiez-le si besoin.": { "ar": "تم استرجاع مبلغ المرة الأخيرة. عدّله إن لزم.", "en": "Last time's amount reused. Change it if needed." }
+  "Montant de la dernière fois repris. Modifiez-le si besoin.": { "ar": "تم استرجاع مبلغ المرة الأخيرة. عدّله إن لزم.", "en": "Last time's amount reused. Change it if needed." },
+  "Corrigez les champs suivants :": { "ar": "صحح الحقول التالية:", "en": "Please fix the following fields:" },
+  "Corrigez le champ suivant :": { "ar": "صحح الحقل التالي:", "en": "Please fix the following field:" },
+  "10 chiffres, par exemple 0612345678": { "ar": "10 أرقام، مثلاً 0612345678", "en": "10 digits, for example 0612345678" }
 }

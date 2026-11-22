@@ -702,5 +702,33 @@
   "Indiquez votre prénom et votre nom (2 caractères minimum).": {
     "ar": "أدخل اسمك الشخصي والعائلي (حرفان على الأقل).",
     "en": "Enter your first and last name (2 characters minimum)."
+  },
+  "Prénom : 2 caractères minimum.": {
+    "ar": "الاسم الشخصي: حرفان على الأقل.",
+    "en": "First name: 2 characters minimum."
+  },
+  "Nom : 2 caractères minimum.": {
+    "ar": "الاسم العائلي: حرفان على الأقل.",
+    "en": "Last name: 2 characters minimum."
+  },
+  "Le numéro de téléphone doit contenir exactement 10 chiffres (exemple : 0612345678).": {
+    "ar": "يجب أن يتكون رقم الهاتف من 10 أرقام بالضبط (مثال: 0612345678).",
+    "en": "The phone number must have exactly 10 digits (example: 0612345678)."
+  },
+  "Les deux mots de passe ne correspondent pas.": {
+    "ar": "كلمتا المرور غير متطابقتين.",
+    "en": "The two passwords do not match."
+  },
+  "Nom du syndic : 2 caractères minimum.": {
+    "ar": "اسم السانديك: حرفان على الأقل.",
+    "en": "Syndic name: 2 characters minimum."
+  },
+  "Cette adresse e-mail possède déjà un compte : connectez-vous.": {
+    "ar": "هذا البريد الإلكتروني لديه حساب بالفعل: سجل الدخول.",
+    "en": "This email address already has an account: sign in."
+  },
+  "Vérifiez le nom du syndic et le téléphone (exactement 10 chiffres).": {
+    "ar": "تحقق من اسم السانديك والهاتف (10 أرقام بالضبط).",
+    "en": "Check the syndic name and phone (exactly 10 digits)."
   }
 }

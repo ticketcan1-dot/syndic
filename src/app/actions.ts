@@ -6,6 +6,7 @@ import { z } from "zod";
 import { supabase } from "@/lib/supabase/server";
 import {
   signUpSchema,
+  signUpErrors,
   organizationSchema,
   residenceSchema,
   unitSchema,
@@ -100,40 +101,40 @@ export async function signIn(form: FormData) {
   if (invitations?.length) redirect("/resident");
   redirect(await landingFor(db));
 }
-export async function signUp(form: FormData) {
+export type SignUpState = {
+  errors: Record<string, string>;
+  values: Record<string, string>;
+  formError?: string;
+} | null;
+// Sign-up used by the form with useActionState: every invalid field is returned at once,
+// together with what the person typed (passwords excepted).
+export async function signUpAction(_previous: SignUpState, form: FormData): Promise<SignUpState> {
   const isSyndic = form.get("syndic") === "on";
   const jar = await cookies();
   // The invitation link opened earlier is remembered, even if the person went through other pages.
   const next = safeNext(form.get("next")) || (isSyndic ? "" : safeNext(decodeCookie(jar.get(INVITE_COOKIE)?.value)));
+  const text = (k: string) => String(form.get(k) ?? "");
+  const values: Record<string, string> = {
+    first_name: text("first_name"),
+    last_name: text("last_name"),
+    phone: text("phone"),
+    email: text("email"),
+    password: text("password"),
+    confirmation: text("confirmation"),
+    organization: text("organization"),
+    plan: text("plan") || "essai",
+    apartment: text("apartment"),
+    syndic: isSyndic ? "on" : "",
+  };
+  const kept = { ...values, password: "", confirmation: "" };
+  const errors = signUpErrors(values, isSyndic);
   const input = signUpSchema.safeParse({
-    ...Object.fromEntries(form),
-    organization: isSyndic ? form.get("organization") : "-",
-    plan: isSyndic ? form.get("plan") : "essai",
+    ...values,
+    organization: isSyndic ? values.organization : "-",
+    plan: isSyndic ? values.plan : "essai",
   });
-  const back =
-    "/inscription?" +
-    (isSyndic ? "syndic=1&" : "") +
-    (next ? `next=${encodeURIComponent(next)}&` : "");
-  if (!input.success || (isSyndic && input.data.organization.length < 2)) {
-    const issues = input.success ? [] : input.error.issues.map((i) => String(i.path[0]));
-    message(
-      back.slice(0, -1),
-      issues.includes("password")
-        ? "Le mot de passe doit contenir au moins 12 caractères."
-        : issues.includes("phone")
-          ? "Numéro de téléphone invalide (exemple : 0612345678)."
-          : issues.includes("email")
-            ? "Adresse e-mail invalide."
-            : issues.includes("first_name") || issues.includes("last_name")
-              ? "Indiquez votre prénom et votre nom (2 caractères minimum)."
-              : isSyndic
-                ? "Vérifiez vos informations et le nom de votre syndic."
-                : "Vérifiez vos informations.",
-    );
-  }
+  if (Object.keys(errors).length || !input.success) return { errors: Object.keys(errors).length ? errors : { form: "Vérifiez vos informations." }, values: kept };
   const v = input.data;
-  if (v.password !== String(form.get("confirmation") ?? ""))
-    message(back.slice(0, -1), "Les mots de passe ne correspondent pas.");
   let created = false;
   try {
     const { provisionClient } = await import("@/lib/provision");
@@ -152,10 +153,10 @@ export async function signUp(form: FormData) {
     created = !error && Boolean(data.user);
   } catch {}
   if (!created)
-    message(
-      back.slice(0, -1),
-      "Création impossible. Cette adresse possède peut-être déjà un compte : connectez-vous.",
-    );
+    return {
+      errors: { email: "Cette adresse e-mail possède déjà un compte : connectez-vous." },
+      values: kept,
+    };
   const db = await supabase();
   const { error } = await db.auth.signInWithPassword({
     email: v.email,
@@ -176,8 +177,17 @@ export async function signUp(form: FormData) {
       message("/en-attente", "Votre compte est créé, mais la demande syndic n’a pas pu être enregistrée. Réessayez ci-dessous.");
     redirect("/en-attente");
   }
-  if (next) await joinFromLink(db, next, String(form.get("apartment") ?? ""));
+  if (next) await joinFromLink(db, next, values.apartment);
   message("/resident", "Bienvenue ! Votre compte est créé.");
+}
+// Plain form action (no JavaScript state): shows the first problem as a message.
+export async function signUp(form: FormData) {
+  const isSyndic = form.get("syndic") === "on";
+  const next = safeNext(form.get("next"));
+  const result = await signUpAction(null, form);
+  const back = "/inscription?" + (isSyndic ? "syndic=1&" : "") + (next ? `next=${encodeURIComponent(next)}` : "");
+  const first = result ? Object.values(result.errors)[0] : undefined;
+  message(back.replace(/[?&]$/, ""), first ?? "Vérifiez vos informations.");
 }
 export async function requestSyndicAccount(form: FormData) {
   const { db, user } = await authenticated();
@@ -187,11 +197,12 @@ export async function requestSyndicAccount(form: FormData) {
       plan: z.enum(["essai", "standard", "entreprise"]),
       phone: z
         .string()
-        .trim()
-        .regex(/^\+?[0-9 ()-]{8,24}$/),
+        .transform((v) => v.replace(/[\s.()-]/g, ""))
+        .pipe(z.string().regex(/^\d{10}$/)),
     })
     .safeParse(Object.fromEntries(form));
-  if (!input.success) message("/en-attente", "Vérifiez vos informations.");
+  if (!input.success)
+    message("/en-attente", "Vérifiez le nom du syndic et le téléphone (exactement 10 chiffres).");
   const meta = user.user_metadata ?? {};
   const name =
     `${meta.first_name ?? ""} ${meta.last_name ?? ""}`.trim() ||

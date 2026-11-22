@@ -3046,3 +3046,37 @@ body:has(.header-lang) .global-language {
   color: #147d63;
   font-weight: 600;
 }
+/* Form errors: every invalid field at once */
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 600;
+}
+.card .field-error svg {
+  color: inherit;
+  flex-shrink: 0;
+}
+.form label.has-error input {
+  border-color: #dc2626 !important;
+  background: #fff5f5;
+}
+.form label.has-error input:focus {
+  outline: 2px solid #dc262640;
+}
+.error-summary {
+  border: 1px solid #fca5a5;
+  background: #fef2f2;
+  color: #7f1d1d;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+.error-summary ul {
+  margin: 6px 0 0;
+  padding-inline-start: 18px;
+  display: grid;
+  gap: 2px;
+}
