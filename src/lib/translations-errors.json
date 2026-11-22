@@ -730,5 +730,9 @@
   "Vérifiez le nom du syndic et le téléphone (exactement 10 chiffres).": {
     "ar": "تحقق من اسم السانديك والهاتف (10 أرقام بالضبط).",
     "en": "Check the syndic name and phone (exactly 10 digits)."
+  },
+  "Choisissez au moins un appartement ou un habitant.": {
+    "ar": "اختر شقة أو ساكناً واحداً على الأقل.",
+    "en": "Choose at least one apartment or resident."
   }
 }

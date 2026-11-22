@@ -8,7 +8,7 @@ export function SelectAll({ name }: { name: string }) {
         type="checkbox"
         onChange={(event) => {
           const box = event.currentTarget.closest("fieldset");
-          box?.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`).forEach((input) => {
+          box?.querySelectorAll<HTMLInputElement>(`input[name="${name}"], input[name="members"]`).forEach((input) => {
             input.checked = event.currentTarget.checked;
           });
         }}

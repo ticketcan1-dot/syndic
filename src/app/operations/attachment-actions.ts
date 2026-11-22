@@ -72,6 +72,34 @@ export async function removeExpenseAttachment(form: FormData) {
   redirect(back + (back.includes("?") ? "&" : "?") + "message=" + encodeURIComponent(ok ? "Pièce jointe supprimée." : "Suppression refusée.") + open);
 }
 // Expense creation returning its id, so that attachments can be sent right after.
+type Member = { user_id: string; email: string; status: string; name: string; phone: string; blocked: boolean; apartments: string[] };
+// Residents ticked in « Pour qui ? » who have no apartment yet get one in their name, so that they
+// can receive their share of the expense. Returns the ids of those apartments.
+async function unitsForMembers(db: Awaited<ReturnType<typeof signedIn>>["db"], residence: string, picked: string[]) {
+  const users = picked.filter((p) => p.startsWith(residence + ":")).map((p) => p.slice(residence.length + 1));
+  if (!users.length) return [];
+  const { data } = await db.rpc("syndic_residence_people", { target_residence: residence });
+  const people = (data ?? []) as Member[];
+  const ids: string[] = [];
+  for (const userId of users) {
+    const m = people.find((p) => p.user_id === userId && p.status === "approved" && !p.blocked);
+    if (!m) continue;
+    const label = m.apartments[0] ?? ((m.name || m.email.split("@")[0]).trim().slice(0, 60) || "Habitant");
+    if (!m.apartments.length) {
+      const { error } = await db.rpc("syndic_update_member", {
+        target_residence: residence,
+        target_user: userId,
+        member_name: m.name,
+        member_phone: m.phone,
+        apartments: [label],
+      });
+      if (error) continue;
+    }
+    const { data: unit } = await db.from("syndic_units").select("id").eq("residence_id", residence).ilike("label", label).limit(1).maybeSingle();
+    if (unit) ids.push(unit.id);
+  }
+  return ids;
+}
 export async function createExpenseReturningId(form: FormData) {
   const { db } = await signedIn();
   const input = z
@@ -85,7 +113,8 @@ export async function createExpenseReturningId(form: FormData) {
         .transform((v) => Math.round(Number(v.replace(",", ".")) * 100))
         .pipe(z.number().int().positive().max(10000000000)),
       date: z.iso.date(),
-      units: z.array(z.uuid()).min(1),
+      units: z.array(z.uuid()),
+      members: z.array(z.string().max(80)),
     })
     .safeParse({
       residence: form.get("target") ?? form.get("residence_id"),
@@ -93,9 +122,14 @@ export async function createExpenseReturningId(form: FormData) {
       amount: form.get("amount"),
       date: form.get("date"),
       units: form.getAll("units"),
+      members: form.getAll("members"),
     });
   if (!input.success) return { error: "Vérifiez le titre, le montant, la date et les appartements." };
   const v = input.data;
+  if (!v.units.length && !v.members.length) return { error: "Choisissez au moins un appartement ou un habitant." };
+  const extra = await unitsForMembers(db, v.residence, v.members);
+  v.units = [...new Set([...v.units, ...extra])];
+  if (!v.units.length) return { error: "Choisissez au moins un appartement ou un habitant." };
   const { data, error } = await db.rpc("syndic_create_expense", {
     target_residence: v.residence,
     expense_title: v.title,

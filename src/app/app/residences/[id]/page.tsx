@@ -241,7 +241,19 @@ export default async function Page({
                         </label>
                       );
                     })}
+                    {residents.filter((r) => !r.blocked && r.apartments.length === 0).map((r) => (
+                      <label key={r.user_id} className="unit-pick no-unit">
+                        <input type="checkbox" name="members" value={`${id}:${r.user_id}`} />{" "}
+                        <span>
+                          <strong>{r.name || r.email}</strong>
+                          <small><I18nText text="sans appartement" /></small>
+                        </span>
+                      </label>
+                    ))}
                   </div>
+                  {residents.some((r) => !r.blocked && r.apartments.length === 0) && (
+                    <p className="form-note"><I18nText text="Un habitant sans appartement reçoit automatiquement un appartement à son nom quand vous le cochez." /></p>
+                  )}
                 </fieldset>
                               </ExpenseCreateForm>
             ) : (

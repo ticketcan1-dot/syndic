@@ -120,3 +120,22 @@ it("block, unblock and remove a member", async () => {
   const o = await one<{ residents: { email: string }[] }>("select public.syndic_admin_overview() r");
   expect(o.residents.some((r) => r.email === "sara@example.com")).toBe(true);
 });
+it("a resident without apartment gets one in their name and can be charged for an expense", async () => {
+  await as(syndic);
+  const people = await one<Person[]>("select public.syndic_residence_people($1) r", [resB]);
+  const omarLike = people.find((p) => p.apartments.length === 0 && p.status === "approved");
+  const target = omarLike?.user_id ?? other;
+  await db.query("select public.syndic_update_member($1,$2,'Omar','0600000000',$3)", [resB, target, ["Omar"]]).catch(async () => {
+    // "other" may not be a member of residence B yet: add and approve them first.
+    const link = await one<string>("select public.syndic_create_residence_link($1) r", [resB]);
+    await as(other);
+    await db.query("select public.syndic_join_residence($1,'Omar','','')", [link]);
+    await as(syndic);
+    await db.query("select public.syndic_decide_member($1,$2,true)", [resB, other]);
+    await db.query("select public.syndic_update_member($1,$2,'Omar','0600000000',$3)", [resB, other, ["Omar"]]);
+  });
+  const unit = (await db.query<{ id: string }>("select id from public.syndic_units where residence_id=$1 and label ilike 'Omar'", [resB])).rows[0].id;
+  await db.query("select public.syndic_create_expense($1,'Eau',10000,'2030-01-01',$2)", [resB, [unit]]);
+  await as(target);
+  expect((await db.query("select * from public.syndic_charge_entries where unit_id=$1", [unit])).rows).toHaveLength(1);
+});

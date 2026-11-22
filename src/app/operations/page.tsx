@@ -67,6 +67,18 @@ export default async function Page({
       loadExpenses(db),
     ]);
   const data = (context.data ?? { units: [], residences: [] }) as Context;
+  const managed0 = data.residences.filter((r) => r.can_manage);
+  // Approved residents without an apartment: they can still be picked for an expense.
+  const homeless = (
+    await Promise.all(
+      managed0.map(async (r) => {
+        const { data: people } = await db.rpc("syndic_residence_people", { target_residence: r.id });
+        return ((people ?? []) as { user_id: string; email: string; name: string; status: string; blocked: boolean; apartments: string[] }[])
+          .filter((p) => p.status === "approved" && !p.blocked && p.apartments.length === 0)
+          .map((p) => ({ residence: r.id, residenceName: r.name, user: p.user_id, name: p.name || p.email }));
+      }),
+    )
+  ).flat();
   // Most recent first: used to reuse the last amount of a frequent expense.
   const recentExpenses = board.expenses
     .filter((e) => e.can_manage)
@@ -233,7 +245,24 @@ export default async function Page({
                         </label>
                       );
                     })}
+                  {homeless.map((h) => (
+                    <label key={h.residence + h.user} className="unit-pick no-unit">
+                      <input type="checkbox" name="members" value={`${h.residence}:${h.user}`} />
+                      <span>
+                        <strong>{h.name}</strong>
+                        <small>
+                          <I18nText text="sans appartement" />
+                          {managed.length > 1 ? " · " + h.residenceName : ""}
+                        </small>
+                      </span>
+                    </label>
+                  ))}
                 </div>
+                {homeless.length > 0 && (
+                  <p className="form-note">
+                    <I18nText text="Un habitant sans appartement reçoit automatiquement un appartement à son nom quand vous le cochez." />
+                  </p>
+                )}
               </fieldset>
             </ExpenseCreateForm>
           </section>

@@ -935,5 +935,7 @@
   "Montant de la dernière fois repris. Modifiez-le si besoin.": { "ar": "تم استرجاع مبلغ المرة الأخيرة. عدّله إن لزم.", "en": "Last time's amount reused. Change it if needed." },
   "Corrigez les champs suivants :": { "ar": "صحح الحقول التالية:", "en": "Please fix the following fields:" },
   "Corrigez le champ suivant :": { "ar": "صحح الحقل التالي:", "en": "Please fix the following field:" },
-  "10 chiffres, par exemple 0612345678": { "ar": "10 أرقام، مثلاً 0612345678", "en": "10 digits, for example 0612345678" }
+  "10 chiffres, par exemple 0612345678": { "ar": "10 أرقام، مثلاً 0612345678", "en": "10 digits, for example 0612345678" },
+  "sans appartement": { "ar": "بدون شقة", "en": "no apartment" },
+  "Un habitant sans appartement reçoit automatiquement un appartement à son nom quand vous le cochez.": { "ar": "الساكن بدون شقة يحصل تلقائياً على شقة باسمه عند تحديده.", "en": "A resident without an apartment automatically gets one in their name when you tick them." }
 }
