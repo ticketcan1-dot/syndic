@@ -686,5 +686,21 @@
   "Dépense refusée.": {
     "ar": "تم رفض المصروف.",
     "en": "Expense refused."
+  },
+  "Le mot de passe doit contenir au moins 12 caractères.": {
+    "ar": "يجب أن تحتوي كلمة المرور على 12 حرفاً على الأقل.",
+    "en": "The password must be at least 12 characters long."
+  },
+  "Numéro de téléphone invalide (exemple : 0612345678).": {
+    "ar": "رقم الهاتف غير صالح (مثال: 0612345678).",
+    "en": "Invalid phone number (example: 0612345678)."
+  },
+  "Adresse e-mail invalide.": {
+    "ar": "البريد الإلكتروني غير صالح.",
+    "en": "Invalid email address."
+  },
+  "Indiquez votre prénom et votre nom (2 caractères minimum).": {
+    "ar": "أدخل اسمك الشخصي والعائلي (حرفان على الأقل).",
+    "en": "Enter your first and last name (2 characters minimum)."
   }
 }

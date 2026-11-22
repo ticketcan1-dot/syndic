@@ -1,5 +1,6 @@
 "use server";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { supabase } from "@/lib/supabase/server";
@@ -10,7 +11,16 @@ import {
   unitSchema,
 } from "@/lib/validation";
 function message(path: string, text: string): never {
-  redirect(`${path}?message=${encodeURIComponent(text)}`);
+  // Keeps the other parameters (e.g. ?next=/rejoindre/…) when the path already has a query.
+  redirect(`${path}${path.includes("?") ? "&" : "?"}message=${encodeURIComponent(text)}`);
+}
+const INVITE_COOKIE = "syndic_invite";
+function decodeCookie(value?: string) {
+  try {
+    return decodeURIComponent(value ?? "");
+  } catch {
+    return "";
+  }
 }
 function safeNext(value: FormDataEntryValue | null) {
   const next = String(value ?? "");
@@ -37,6 +47,7 @@ async function joinFromLink(
   next: string,
   apartment: string,
 ): Promise<never> {
+  (await cookies()).delete(INVITE_COOKIE);
   const token = next.split("/").pop() ?? "";
   const { data: info } = await db.rpc("syndic_residence_link_info", { token });
   if (!info) redirect(next);
@@ -91,7 +102,9 @@ export async function signIn(form: FormData) {
 }
 export async function signUp(form: FormData) {
   const isSyndic = form.get("syndic") === "on";
-  const next = safeNext(form.get("next"));
+  const jar = await cookies();
+  // The invitation link opened earlier is remembered, even if the person went through other pages.
+  const next = safeNext(form.get("next")) || (isSyndic ? "" : safeNext(decodeCookie(jar.get(INVITE_COOKIE)?.value)));
   const input = signUpSchema.safeParse({
     ...Object.fromEntries(form),
     organization: isSyndic ? form.get("organization") : "-",
@@ -101,13 +114,23 @@ export async function signUp(form: FormData) {
     "/inscription?" +
     (isSyndic ? "syndic=1&" : "") +
     (next ? `next=${encodeURIComponent(next)}&` : "");
-  if (!input.success || (isSyndic && input.data.organization.length < 2))
+  if (!input.success || (isSyndic && input.data.organization.length < 2)) {
+    const issues = input.success ? [] : input.error.issues.map((i) => String(i.path[0]));
     message(
       back.slice(0, -1),
-      isSyndic
-        ? "Vérifiez vos informations et le nom de votre syndic."
-        : "Vérifiez vos informations.",
+      issues.includes("password")
+        ? "Le mot de passe doit contenir au moins 12 caractères."
+        : issues.includes("phone")
+          ? "Numéro de téléphone invalide (exemple : 0612345678)."
+          : issues.includes("email")
+            ? "Adresse e-mail invalide."
+            : issues.includes("first_name") || issues.includes("last_name")
+              ? "Indiquez votre prénom et votre nom (2 caractères minimum)."
+              : isSyndic
+                ? "Vérifiez vos informations et le nom de votre syndic."
+                : "Vérifiez vos informations.",
     );
+  }
   const v = input.data;
   if (v.password !== String(form.get("confirmation") ?? ""))
     message(back.slice(0, -1), "Les mots de passe ne correspondent pas.");

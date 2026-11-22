@@ -7,6 +7,7 @@ import { Brand } from "@/components/brand";
 import { Notice } from "@/components/notice";
 import { Submit } from "@/components/submit";
 import { joinResidenceExistingAccount } from "@/app/rejoindre/[token]/actions";
+import { RememberInvite } from "@/components/remember-invite";
 export function ResidenceJoin({
   token,
   info,
@@ -33,6 +34,7 @@ export function ResidenceJoin({
           <I18nText text="Ce lien vous a été envoyé par" /> <strong>{info.syndic}</strong>
           {info.city ? " · " + info.city : ""}
         </p>
+        <RememberInvite token={token} />
         <Notice message={message} />
         {user ? (
           <form action={joinResidenceExistingAccount} className="form">
