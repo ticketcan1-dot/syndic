@@ -46,7 +46,8 @@ export default async function Home() {
       <main>
         <section className="landing-hero">
           <Image
-            src="/images/residence-hero.png"
+            src="/images/hero-residence.webp"
+            style={{ objectFit: "cover", objectPosition: "72% center" }}
             alt={locale === "ar" ? "إقامة عصرية وحديقة بالأشجار" : locale === "en" ? "Contemporary residence and landscaped garden" : "Résidence contemporaine et jardin arboré"}
             fill
             priority
@@ -112,36 +113,29 @@ export default async function Home() {
             <I18nText text="Une gestion apaisée." />
           </h2>
           <div className="landing-features">
-            {[
+            {(
               [
-                Wallet,
-                "Qui doit quoi ?",
-                "Retrouvez les dépenses partagées, les règlements et le montant restant à payer.",
-              ],
-              [
-                MessageCircle,
-                "On se parle.",
-                "Échangez avec votre syndic, recevez les annonces et suivez vos demandes.",
-              ],
-              [
-                CalendarDays,
-                "Rien ne vous échappe.",
-                "Réunions, activités et rappels : gardez le fil de la vie de votre résidence.",
-              ],
-            ].map(([Icon, title, description]) => {
-              const I = Icon as typeof Wallet;
-              return (
-                <article key={String(title)}>
-                  <I size={28} />
-                  <h3>
-                    <I18nText text={String(String(title))} />
-                  </h3>
-                  <p>
-                    <I18nText text={String(String(description))} />
-                  </p>
-                </article>
-              );
-            })}
+                [Wallet, "/images/illus-depenses.webp", "Qui doit quoi ?", "Retrouvez les dépenses partagées, les règlements et le montant restant à payer."],
+                [MessageCircle, "/images/illus-echanges.webp", "On se parle.", "Échangez avec votre syndic, recevez les annonces et suivez vos demandes."],
+                [CalendarDays, null, "Rien ne vous échappe.", "Réunions, activités et rappels : gardez le fil de la vie de votre résidence."],
+              ] as const
+            ).map(([Icon, picture, title, description]) => (
+              <article key={title}>
+                <div className="feature-visual">
+                  {picture ? (
+                    <Image src={picture} alt="" width={320} height={320} sizes="(max-width: 800px) 70vw, 320px" />
+                  ) : (
+                    <Icon size={72} strokeWidth={1.6} />
+                  )}
+                </div>
+                <h3>
+                  <I18nText text={title} />
+                </h3>
+                <p>
+                  <I18nText text={description} />
+                </p>
+              </article>
+            ))}
           </div>
         </section>
         <section className="landing-steps" id="comment">

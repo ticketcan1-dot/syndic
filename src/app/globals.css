@@ -3343,3 +3343,46 @@ textarea {
     padding: 10px 14px;
   }
 }
+/* Feature illustrations (home page) */
+.feature-visual {
+  aspect-ratio: 1 / 1;
+  max-width: 260px;
+  border-radius: 28px;
+  background: linear-gradient(160deg, #f3faf6, #e3f3ea);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+.feature-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+.landing-features .feature-visual svg {
+  color: #147d63;
+  opacity: 0.85;
+}
+@media (max-width: 800px) {
+  .feature-visual {
+    max-width: 220px;
+  }
+}
+@media (max-width: 420px) {
+  .landing-nav {
+    padding: 16px 14px;
+    gap: 8px;
+  }
+  .landing-nav .brand {
+    font-size: 16px;
+    gap: 8px;
+  }
+  .landing-nav nav {
+    gap: 6px;
+  }
+  .landing-nav nav > a.primary {
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+}
