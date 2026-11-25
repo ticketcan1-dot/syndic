@@ -3386,3 +3386,12 @@ textarea {
     font-size: 12px;
   }
 }
+/* Phone: feature illustrations and their text centred */
+@media (max-width: 800px) {
+  .landing-features article {
+    text-align: center;
+  }
+  .feature-visual {
+    margin-inline: auto;
+  }
+}
