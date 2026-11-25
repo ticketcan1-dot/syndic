@@ -937,5 +937,17 @@
   "Corrigez le champ suivant :": { "ar": "صحح الحقل التالي:", "en": "Please fix the following field:" },
   "10 chiffres, par exemple 0612345678": { "ar": "10 أرقام، مثلاً 0612345678", "en": "10 digits, for example 0612345678" },
   "sans appartement": { "ar": "بدون شقة", "en": "no apartment" },
-  "Un habitant sans appartement reçoit automatiquement un appartement à son nom quand vous le cochez.": { "ar": "الساكن بدون شقة يحصل تلقائياً على شقة باسمه عند تحديده.", "en": "A resident without an apartment automatically gets one in their name when you tick them." }
+  "Un habitant sans appartement reçoit automatiquement un appartement à son nom quand vous le cochez.": { "ar": "الساكن بدون شقة يحصل تلقائياً على شقة باسمه عند تحديده.", "en": "A resident without an apartment automatically gets one in their name when you tick them." },
+  "Bonjour": { "ar": "مرحباً", "en": "Hello" },
+  "Voici l’essentiel de vos copropriétés aujourd’hui.": { "ar": "إليك أهم ما يخص إقاماتك اليوم.", "en": "Here is the essentials of your buildings today." },
+  "règlement(s) d’habitants à confirmer": { "ar": "أداء(ات) سكان في انتظار التأكيد", "en": "resident payment(s) to confirm" },
+  "Reste à encaisser": { "ar": "الباقي للتحصيل", "en": "Left to collect" },
+  "Tout voir": { "ar": "عرض الكل", "en": "See all" },
+  "reste": { "ar": "الباقي", "en": "left" },
+  "Ajoutez votre premier immeuble pour inviter vos habitants et partager les dépenses.": { "ar": "أضف عمارتك الأولى لدعوة السكان ومشاركة المصاريف.", "en": "Add your first building to invite residents and share expenses." },
+  "Nouvelle dépense": { "ar": "مصروف جديد", "en": "New expense" },
+  "Eau, électricité, sécurité…": { "ar": "الماء، الكهرباء، الأمن…", "en": "Water, electricity, security…" },
+  "Règlements et relances": { "ar": "الأداءات والتذكيرات", "en": "Payments and reminders" },
+  "Annonces, photos, sondages": { "ar": "إعلانات، صور، استطلاعات", "en": "Announcements, photos, polls" },
+  "Plan et paiements": { "ar": "الباقة والمدفوعات", "en": "Plan and payments" }
 }

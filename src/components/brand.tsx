@@ -4,7 +4,7 @@ export function Brand() {
   return (
     <Link href="/" className="brand">
       <Building2 aria-hidden="true" />
-      SyndiConnect<span style={{ color: "#2563eb" }}>.</span>
+      SyndiConnect<span className="brand-dot">.</span>
     </Link>
   );
 }

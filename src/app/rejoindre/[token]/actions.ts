@@ -28,17 +28,16 @@ export async function joinResidence(form: FormData) {
   const attempt = randomUUID();
   let created = false;
   let success = false;
+  // redirect() throws: it must not run inside the try/catch below, or the message is lost.
+  let reservedOk = false;
+  try {
+    const { data: reserved, error } = await provisionClient().rpc("syndic_reserve_join_link", { token: v.token, attempt });
+    reservedOk = !error && reserved === true;
+  } catch {}
+  if (!reservedOk)
+    redirect(back + "?message=" + encodeURIComponent("Invitation indisponible ou en cours d’utilisation."));
   try {
     const service = provisionClient();
-    const { data: reserved, error } = await service.rpc(
-      "syndic_reserve_join_link",
-      { token: v.token, attempt },
-    );
-    if (error || reserved !== true)
-      redirect(
-        back +
-          "?message=Invitation%20indisponible%20ou%20en%20cours%20d’utilisation.",
-      );
     const result = await service.auth.admin.createUser({
       email: v.email,
       password: v.password,

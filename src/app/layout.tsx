@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { cookies } from "next/headers";
 import { validLocale } from "@/lib/locale";
-import { LanguageProvider, LanguagePicker } from "@/components/i18n";
+import { LanguageProvider } from "@/components/i18n";
+import { LanguageMenu } from "@/components/language-menu";
 import { NavigationProgress } from "@/components/navigation-progress";
 export const metadata: Metadata = {
   title: {
@@ -24,7 +25,7 @@ export default async function RootLayout({
         <NavigationProgress />
         <LanguageProvider locale={locale}>
           <div className="global-language">
-            <LanguagePicker />
+            <LanguageMenu />
           </div>
           {children}
         </LanguageProvider>

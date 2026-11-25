@@ -6,7 +6,6 @@ import Link from "next/link";
 import { signedIn } from "@/lib/access";
 import { Notice } from "@/components/notice";
 import { Submit } from "@/components/submit";
-import { Brand } from "@/components/brand";
 import { operate } from "./actions";
 import { ExpenseBoard } from "@/components/expense-board";
 import { loadExpenses } from "@/lib/expenses";
@@ -448,14 +447,14 @@ export default async function Page({
             {inbox.data?.length ? (
               inbox.data.map((n) => (
                 <article className={"list-row" + (n.read_at ? "" : " unread")} key={n.id}>
-                  <div>
+                  <a href={`/api/notifications/open?id=${n.id}`} className="notif-link">
                     <strong><SystemNotification text={n.title} /></strong>
                     <p className="small">
                       {new Date(n.created_at).toLocaleString(intlLocale, {
                         timeZone: "Africa/Casablanca",
                       })}
                     </p>
-                  </div>
+                  </a>
                   {!n.read_at && (
                     <form action={operate}>
                       <LocalizedInput type="hidden" name="task" value="read" />

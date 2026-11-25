@@ -2,10 +2,9 @@ import { I18nText } from "@/components/i18n";
 import { AppFrame } from "@/components/app-frame";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LayoutDashboard, Building2, Grid2X2, ShieldCheck } from "lucide-react";
-import { Brand } from "@/components/brand";
 import { signedIn } from "@/lib/access";
 import { signOut } from "@/app/actions";
+import { SectionTabs } from "@/components/section-tabs";
 import { daysLeft, planLabels } from "@/lib/plans";
 export const dynamic = "force-dynamic";
 export default async function AppLayout({
@@ -47,27 +46,21 @@ export default async function AppLayout({
     <AppFrame>
       <div className="container">
         <nav className="residence-tabs">
-          <Link href="/app">
-            <I18nText text="Vue d’ensemble" />
-          </Link>
-          <Link href="/app/residences">
-            <I18nText text="Immeubles" />
-          </Link>
-          <Link href="/app/lots">
-            <I18nText text="Appartements" />
-          </Link>
-          <Link href="/app/communaute">
-            <I18nText text="Habitants" />
-          </Link>
-          <Link href="/abonnement">
-            <I18nText text="Abonnement" />
-          </Link>
+          <SectionTabs
+            items={[
+              { href: "/app", label: "Vue d’ensemble", exact: true },
+              { href: "/app/residences", label: "Immeubles" },
+              { href: "/app/lots", label: "Appartements" },
+              { href: "/app/communaute", label: "Habitants" },
+              { href: "/abonnement", label: "Abonnement" },
+            ]}
+          />
           {isAdmin === true && (
             <Link href="/admin">
               <I18nText text="Administration" />
             </Link>
           )}
-          <form action={signOut}>
+          <form action={signOut} className="tabs-signout">
             <button className="text-link">
               <I18nText text="Déconnexion" />
             </button>

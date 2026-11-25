@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { plans, contact } from "@/lib/plans";
 import { Brand } from "@/components/brand";
+import { LanguageMenu } from "@/components/language-menu";
 import { currentLocale } from "@/lib/locale-server";
 export default async function Home() {
   const locale = await currentLocale();
@@ -35,6 +36,7 @@ export default async function Home() {
           <Link href="/inscription">
             <I18nText text="Créer un compte" />
           </Link>
+          <LanguageMenu className="header-lang" />
           <Link href="/connexion" className="button primary">
             <I18nText text="Mon espace" />
             <ArrowUpRight size={17} />

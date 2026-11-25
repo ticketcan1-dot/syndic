@@ -30,23 +30,3 @@ export function SystemNotification({ text }: { text: string }) {
   const prefix = prefixes.find((value) => text.startsWith(value));
   return <>{prefix ? translate(prefix.trim(), locale) + " " + text.slice(prefix.length) : translate(text, locale)}</>;
 }
-export function LanguagePicker() {
-  const locale = useLocale();
-  return (
-    <label className="language-picker">
-      <span className="sr-only">Language</span>
-      <select
-        aria-label="Language"
-        value={locale}
-        onChange={(event) => {
-          document.cookie = `syndic_locale=${event.target.value};path=/;max-age=31536000;samesite=lax;secure`;
-          window.location.reload();
-        }}
-      >
-        <option value="fr">FR · Français</option>
-        <option value="ar">ع · العربية</option>
-        <option value="en">EN · English</option>
-      </select>
-    </label>
-  );
-}
